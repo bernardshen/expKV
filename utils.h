@@ -14,7 +14,7 @@ static uint64_t hash(const uint8_t * key, size_t len) {
 static uint64_t hash_md5(const uint8_t *key, size_t len) {
     size_t temp_hash[(MD5_DIGEST_LENGTH + sizeof(size_t) - 1) / sizeof(size_t)];
     MD5(key, len, (uint8_t *)temp_hash);
-    assert(8 <= MD5_DIGEST_LENGTH);
+    // assert(8 <= MD5_DIGEST_LENGTH);
     return *(size_t *)temp_hash;
 }
 

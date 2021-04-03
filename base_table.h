@@ -11,7 +11,7 @@ typedef enum _TableType {
 typedef struct _BaseTable {
     void * table;
     int (*put)(void * table, char * key, size_t klen, char * value, size_t vlen);
-    int (*get)(void * table, char * key, size_t klen, void * value, size_t *vlen);
+    int (*get)(void * table, char * key, size_t klen, char * value, size_t *vlen);
     int (*del)(void * table, char * key, size_t klen);
 } BaseTable;
 

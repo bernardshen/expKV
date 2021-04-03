@@ -1,4 +1,5 @@
 #include "base_table.h"
+#include "simple_table.h"
 
 int initTable(BaseTable * t, TableType type) {
     int ret = -1;
