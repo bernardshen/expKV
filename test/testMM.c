@@ -4,19 +4,20 @@
 #include "testUtil.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 
 static void printMMInfo(MemoryManager * mm) {
     printf("---- MMInfo ----\n");
-    printf("tableAddr: 0x%08x\n", mm->tableAddr);
-    printf("itemPool: 0x%08x\n", mm->itemPool);
-    printf("tableAllocated: %s\n", mm->tableAllocated);
-    printf("freeSize: %d\n", mm->freeSize);
+    printf("tableAddr: 0x%08lx\n", (uint64_t)mm->tableAddr);
+    printf("itemPool: 0x%08lx\n", (uint64_t)mm->itemPool);
+    printf("tableAllocated: %d\n", mm->tableAllocated);
+    printf("freeSize: %ld\n", mm->freeSize);
     printf("MRRegistered: %d\n", mm->MRRegistered);
     printf("----------------\n");
 }
 
 static void printItem(void * item) {
-    printf("Item: 0x%08x\n", item);
+    printf("Item: 0x%08lx\n", (uint64_t)item);
 }
 
 int main() {
