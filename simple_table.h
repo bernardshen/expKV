@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include "base_table.h"
 #include "spinlock.h"
+#include "mm.h"
 
 #define SIMPLE_TABLE_SIZE 256
 
@@ -29,8 +30,8 @@ typedef struct _SimpleTable {
 
 int initSimpleTable(BaseTable * t);
 
-int simpleTablePut(void * table, char * key, size_t klen, char * value, size_t vlen);
-int simpleTableGet(void * table, char * key, size_t klen, char * value, size_t *vlen);
-int simpleTableDel(void * table, char * key, size_t klen);
+int simpleTablePut(BaseTable * table, char * key, size_t klen, char * value, size_t vlen);
+int simpleTableGet(BaseTable * table, char * key, size_t klen, char * value, size_t *vlen);
+int simpleTableDel(BaseTable * table, char * key, size_t klen);
 
 #endif

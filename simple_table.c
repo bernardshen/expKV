@@ -4,9 +4,11 @@
 #include "base_table.h"
 #include "utils.h"
 #include "spinlock.h"
+#include "mm.h"
 
 int initSimpleTable(BaseTable * t) {
-    SimpleTable * table = (SimpleTable *)malloc(sizeof(SimpleTable));
+    // SimpleTable * table = (SimpleTable *)malloc(sizeof(SimpleTable));
+    SimpleTable * table = (SimpleTable *)MMAllocTable(t->mm);
 
     if (table == NULL) {
         return -1;
@@ -28,8 +30,8 @@ int initSimpleTable(BaseTable * t) {
     return 0;
 }
 
-int simpleTablePut(void * table, char * key, size_t klen, char * value, size_t vlen) {
-    SimpleTable *stable = (SimpleTable *)table;
+int simpleTablePut(BaseTable * table, char * key, size_t klen, char * value, size_t vlen) {
+    SimpleTable *stable = (SimpleTable *)table->table;
     klen = min(klen, 16);
     uint64_t keyhash = hash(key, klen) % SIMPLE_TABLE_SIZE;
 
@@ -52,7 +54,8 @@ int simpleTablePut(void * table, char * key, size_t klen, char * value, size_t v
         }
         if (p == NULL) {
             // inster the item
-            p = (SimpleTableItem*)malloc(sizeof(SimpleTableItem));
+            // p = (SimpleTableItem*)malloc(sizeof(SimpleTableItem));
+            p = (SimpleTableItem *)MMAllocItem(table->mm);
             if (p == NULL) {
                 return -1;
             }
@@ -79,8 +82,8 @@ int simpleTablePut(void * table, char * key, size_t klen, char * value, size_t v
     return 0;
 }
 
-int simpleTableGet(void * table, char * key, size_t klen, char * value, size_t * vlen) {
-    SimpleTable *stable = (SimpleTable *)table;
+int simpleTableGet(BaseTable * table, char * key, size_t klen, char * value, size_t * vlen) {
+    SimpleTable *stable = (SimpleTable *)table->table;
     klen = min(klen, 16);
     uint64_t keyhash = hash(key, klen) % SIMPLE_TABLE_SIZE;
     
@@ -113,8 +116,8 @@ int simpleTableGet(void * table, char * key, size_t klen, char * value, size_t *
     return -1;
 }
 
-int simpleTableDel(void * table, char * key, size_t klen) {
-    SimpleTable *stable = (SimpleTable *)table;
+int simpleTableDel(BaseTable * table, char * key, size_t klen) {
+    SimpleTable *stable = (SimpleTable *)table->table;
     klen = min(klen, 16);
     uint64_t keyhash = hash(key, klen) % SIMPLE_TABLE_SIZE;
 
@@ -139,11 +142,13 @@ int simpleTableDel(void * table, char * key, size_t klen) {
                         memcpy(item->value, tmp->value, sizeof(int64_t) * 2);
                         item->itemVec = tmp->itemVec;
                         item->next = tmp->next;
-                        free(tmp);
+                        // free(tmp);
+                        MMFreeItem(table->mm, (void *)tmp);
                     }
                 } else {
                     prev->next = p->next;
-                    free(p);
+                    // free(p);
+                    MMFreeItem(table->mm, p);
                 }
 
                 // unlock item

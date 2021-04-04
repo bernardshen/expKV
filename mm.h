@@ -3,10 +3,8 @@
 
 #include <stdlib.h>
 #include <infiniband/verbs.h>
-#include "base_table.h"
 #include "spinlock.h"
-
-#define TEST
+#include "kvTypes.h"
 
 #ifndef TEST
 #define ITEM_POOL_SIZE 65536

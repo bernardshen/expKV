@@ -107,7 +107,7 @@ void * MMAllocItem(MemoryManager * mm) {
     return ret;
 }
 
-void * MMAllocaTable(MemoryManager * mm) {
+void * MMAllocTable(MemoryManager * mm) {
     void * ret = NULL;
     spin_lock(&(mm->lock));
 
