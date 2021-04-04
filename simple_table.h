@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include "base_table.h"
+#include "spinlock.h"
 
 #define SIMPLE_TABLE_SIZE 256
 
@@ -15,6 +16,7 @@ typedef struct _SimpleTableItem {
     uint8_t itemVec;                      // indicate if the item is valid or not
     // 1: valid
     // 2: keylen
+    spinlock lock;                         // used to lock the item
     char key[16];
     int64_t value[2];
     struct _SimpleTableItem * next;  // point to the next item with same hashkey

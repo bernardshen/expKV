@@ -3,6 +3,7 @@
 #include "simple_table.h"
 #include "base_table.h"
 #include "utils.h"
+#include "spinlock.h"
 
 int initSimpleTable(BaseTable * t) {
     SimpleTable * table = (SimpleTable *)malloc(sizeof(SimpleTable));
@@ -15,6 +16,7 @@ int initSimpleTable(BaseTable * t) {
     for (int i = 0; i < SIMPLE_TABLE_SIZE; i++) {
         table->table[i].itemVec = 0;
         table->table[i].next = NULL;
+        spin_unlock(&(table->table[i].lock));
     }
 
     // bind SimpleTable to BaseTable
@@ -31,9 +33,11 @@ int simpleTablePut(void * table, char * key, size_t klen, char * value, size_t v
     klen = min(klen, 16);
     uint64_t keyhash = hash(key, klen) % SIMPLE_TABLE_SIZE;
 
-    // get value
-    // TODO lock the item
+    // get value & lock the item
     SimpleTableItem * item = &(stable->table[(size_t)keyhash]);
+    spin_lock(&(item->lock));
+
+    // if the item is valid
     if (SIMPLE_TABLE_ITEM_VALID(item->itemVec)) {
         // find potential keys
         SimpleTableItem * p;
@@ -69,7 +73,9 @@ int simpleTablePut(void * table, char * key, size_t klen, char * value, size_t v
         item->value[1] = hash_md5((const uint8_t *)&(item->value[0]), sizeof(int64_t));
         item->itemVec = SIMPLE_TABLE_ITEM_VEC(1, klen);
     }
-    // TODO: unlock the item
+
+    // unlock the item
+    spin_unlock(&(item->lock));
     return 0;
 }
 
@@ -78,8 +84,10 @@ int simpleTableGet(void * table, char * key, size_t klen, char * value, size_t *
     klen = min(klen, 16);
     uint64_t keyhash = hash(key, klen) % SIMPLE_TABLE_SIZE;
     
-    // TODO: lock the item
+    // get the item & lock the item
     SimpleTableItem *item = &(stable->table[keyhash]);
+    spin_lock(&(item->lock));
+
     if (SIMPLE_TABLE_ITEM_VALID(item->itemVec)) {
         SimpleTableItem * p;
         for (p = item; p; p = p->next) {
@@ -92,14 +100,16 @@ int simpleTableGet(void * table, char * key, size_t klen, char * value, size_t *
                 *(int64_t *)value = tmp;
                 *vlen = sizeof(int64_t);
                 
-                // TODO: unlock the item
+                // unlock the item
+                spin_unlock(&(item->lock));
                 return 0;
             }
         }
     }
 
     // not found
-    // TODO: unlock the item
+    // unlock the item
+    spin_unlock(&(item->lock));
     return -1;
 }
 
@@ -108,8 +118,10 @@ int simpleTableDel(void * table, char * key, size_t klen) {
     klen = min(klen, 16);
     uint64_t keyhash = hash(key, klen) % SIMPLE_TABLE_SIZE;
 
-    // TODO: lock the item
+    // get item & lock the item
     SimpleTableItem *item = &(stable->table[keyhash]);
+    spin_lock(&(item->lock));
+
     if (SIMPLE_TABLE_ITEM_VALID(item->itemVec)) {
         SimpleTableItem * p;
         SimpleTableItem * prev;
@@ -133,11 +145,14 @@ int simpleTableDel(void * table, char * key, size_t klen) {
                     prev->next = p->next;
                     free(p);
                 }
-                // TODO: unlock item
+
+                // unlock item
+                spin_unlock(&(item->lock));
                 return 0;
             }
         }
     }
-    // TODO: unlock the item
+    // unlock the item
+    spin_unlock(&(item->lock));
     return -1;
 }
