@@ -19,4 +19,13 @@ void checkErr(int ret, char * str) {
     }
 }
 
+void nl() {
+    printf("\n");
+}
+
+void testName(char * str) {
+    nl();
+    printf("===== %s =====\n", str);
+}
+
 #endif
