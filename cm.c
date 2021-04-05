@@ -12,10 +12,12 @@
 #include <arpa/inet.h>
 #include <sys/wait.h>
 #include <signal.h>
+#include <byteswap.h>
+#include <errno.h>
 #include "mm.h"
 
 #define KV_CQ_SIZE 10
-#define KV_TCP_PORT 2333
+#define KV_TCP_PORT "2333"
 #define KV_TCP_BACKLOG 10
 #define KV_LOCAL_MR_SIZE 512
 #define KV_RDMA_PROTNUM 1
@@ -32,6 +34,31 @@ static inline uint64_t ntohll(uint64_t x) { return x; }
 #endif
 
 // ------ private functions ------
+static int post_receive(PeerData * peer) {
+	struct ibv_recv_wr rr;
+	struct ibv_sge sge;
+	struct ibv_recv_wr *bad_wr;
+	int rc;
+	/* prepare the scatter/gather entry */
+	memset(&sge, 0, sizeof(sge));
+	sge.addr = (uintptr_t)peer->mr->addr;
+	sge.length = 100;
+	sge.lkey = peer->mr->lkey;
+	/* prepare the receive work request */
+	memset(&rr, 0, sizeof(rr));
+	rr.next = NULL;
+	rr.wr_id = 0;
+	rr.sg_list = &sge;
+	rr.num_sge = 1;
+	/* post the Receive Request to the RQ */
+	rc = ibv_post_recv(peer->qp, &rr, &bad_wr);
+	if (rc)
+		fprintf(stderr, "failed to post RR\n");
+	else
+		fprintf(stdout, "Receive Request was posted\n");
+	return rc;
+}
+
 // create some common datastructures (ibv_ctx, ibv_pd, ibv_cq)
 static int initCMCommon(ConnectionManager * cm) {
     struct ibv_device **dev_list = NULL;
@@ -185,13 +212,14 @@ static int initCMClient(ConnectionManager * cm) {
     // client socket initialization
     int sockfd;
     struct addrinfo hints, *servinfo, *p;
+    char * hostName = "127.0.0.1";
     
     // set hints
     memset(&hints, 0, sizeof(hints));
-    hints.ai_flags = AF_INET;
+    hints.ai_family = AF_INET;
     hints.ai_socktype = SOCK_STREAM;
 
-    if (getaddrinfo("localhost", KV_TCP_PORT, &hints, &servinfo) != 0) {
+    if (getaddrinfo(hostName, KV_TCP_PORT, &hints, &servinfo) != 0) {
         printf("getaddrinfo failed\n");
         return -1;
     }
@@ -343,16 +371,17 @@ static int serverConnectQP(ConnectionManager * cm, PeerData * peer, int sockfd) 
     
     // prepare gid
     {
-        ret = ibv_query_gid(cm->ctx, KV_RDMA_GIDIDX, KV_RDMA_GIDIDX, &myGid);
+        ret = ibv_query_gid(cm->ctx, KV_RDMA_PROTNUM, KV_RDMA_GIDIDX, &myGid);
         if (ret) {
             printf("ibv_query_gid failed\n");
+            printf("%s\n", strerror(errno));
             return -1;
         }
     }
     // prepare local data
-    localConData.tableAddr = htonll((uintptr_t)cm->tableMR->addr);
+    localConData.tableAddr = htonll((uintptr_t)(cm->tableMR->addr));
     localConData.tableRKey = htonl(cm->tableMR->rkey);
-    localConData.itemPoolRKey = htonll((uintptr_t)cm->itemPoolMr->addr);
+    localConData.itemPoolRKey = htonll((uintptr_t)(cm->itemPoolMr->addr));
     localConData.itemPoolRKey = htonl(cm->itemPoolMr->rkey);
     localConData.qpNum = htonl(qp->qp_num);
     localConData.lid = htons(cm->portAttr.lid);
@@ -496,11 +525,6 @@ static int clientConnectQP(ConnectionManager * cm, PeerData * peer) {
         printf("modify_qp_to_rtr failed\n");
         return -1;
     }
-    ret = post_receive(peer);
-    if (ret) {
-        printf("Failed to post initial rr\n");
-        return -1;
-    }
     ret = modify_qp_to_rts(qp);
     if (ret) {
         printf("modify_qp_to_rts failed\n");
@@ -521,6 +545,7 @@ static int clientConnectQP(ConnectionManager * cm, PeerData * peer) {
 int initCM(ConnectionManager * cm, NodeType nodeType) {
     int ret = -1;
     cm->nodeType = nodeType;
+    cm->peerNum = 0;
     
     switch (nodeType) {
     case CLIENT:
@@ -540,7 +565,6 @@ int initCM(ConnectionManager * cm, NodeType nodeType) {
 
 // called by the server to accept client requests
 void CMServerConnect(ConnectionManager * cm) {
-    socklen_t sin_size;
     struct sockaddr_storage their_addr;
     socklen_t sin_size = sizeof(their_addr);
     int new_fd;

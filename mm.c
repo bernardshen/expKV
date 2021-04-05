@@ -55,9 +55,6 @@ int initMM(MemoryManager * mm, TableType type) {
         return -1;
     }
 
-    // lock the structure
-    spin_lock(&(mm->lock));
-
     // set mm data
     mm->tableAddr = tableAddr;
     mm->itemPool = itemPool;
@@ -76,8 +73,6 @@ int initMM(MemoryManager * mm, TableType type) {
         mm->bitMap[i] = 0;
     }
 
-    // unlock the item
-    spin_unlock(&(mm->lock));
     return 0;
 }
 
@@ -177,6 +172,10 @@ int MMRegisterMR(MemoryManager * mm, struct ibv_pd * pd, int access) {
 
     // modify the indicator to show mr is registerd
     mm->MRRegistered = 1;
+
+    // save mr to mm
+    mm->tableMR = tableMR;
+    mm->itemPoolMR = itemPoolMR;
 
     // unlock and return success
     spin_unlock(&(mm->lock));
