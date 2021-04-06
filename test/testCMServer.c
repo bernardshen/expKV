@@ -1,36 +1,59 @@
 #include "cm.h"
 #include "mm.h"
+#include "testUtil.h"
 #include <stdio.h>
+#include <pthread.h>
+#include <byteswap.h>
+
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+static inline uint64_t htonll(uint64_t x) { return bswap_64(x); }
+static inline uint64_t ntohll(uint64_t x) { return bswap_64(x); }
+#elif __BYTE_ORDER == __BIG_ENDIAN
+static inline uint64_t htonll(uint64_t x) { return x; }
+static inline uint64_t ntohll(uint64_t x) { return x; }
+#else
+#error __BYTE_ORDER is neither __LITTLE_ENDIAN nor __BIG_ENDIAN
+#endif
+
+void testth1(void * cm) {
+    testName("CMServerConnect");
+    CMServerConnect((ConnectionManager *)cm);
+}
 
 int main() {
     MemoryManager mm;
     ConnectionManager cm;
     int ret = -1;
 
+    testName("initMM");
     ret = initMM(&mm, SIMPLE);
-    if (ret < 0) {
-        printf("initMM failed\n");
-        return -1;
-    }
+    checkErr(ret, "initMM");
 
+    testName("initCM");
     ret = initCM(&cm, SERVER);
-    if (ret < 0) {
-        printf("initCM failed\n");
-        return -1;
-    }
+    checkErr(ret, "initCM");
 
-    printf("registering mr\n");
+    testName("CMServerRegisterMR");
     ret = CMServerRegisterMR(&cm, &mm);
-    if (ret < 0) {
-        printf("CMServerRegisterMR failed\n");
-        return -1;
-    }
+    checkErr(ret, "CMServerRegisterMR");
 
-    printf("Serving clients\n");
-    CMServerConnect(&cm);
-    if (ret < 0) {
-        printf("CMServerConnect failed\n");
-        return -1;
+    testName("create server listen thread\n");
+    pthread_t ptid;
+    ret = pthread_create(&ptid, NULL, testth1, (void *)&cm);
+    checkErr(ret, "create thread");
+
+    while (1) {
+        int c = CMPollOnce(&cm, 0);
+        checkErr(c, "CMPollOnce");
+        if (c > 0) {
+            break;
+        }
     }
+    RPCMessage *c = cm.peers[0]->mr->addr;
+    c->reqType = ntohl(c->reqType);
+    printf("key: %c%c%c\n", c->key[0], c->key[1], c->key[2]);
+    printf("value: %d\n", ntohll(c->value));
+
+    pthread_join(ptid, NULL);
     return 0;
 }

@@ -16,7 +16,9 @@ void printKV(char * k, size_t klen, int64_t value) {
 void checkErr(int ret, char * str) {
     if (ret < 0) {
         printf("%s error\n", str);
+        return;
     }
+    printf("%s success\n", str);
 }
 
 void nl() {

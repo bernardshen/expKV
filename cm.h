@@ -6,6 +6,7 @@
 #include "kvTypes.h"
 #include "spinlock.h"
 #include "mm.h"
+#include "RPCMessages.h"
 
 #define KV_CONN_PORT 2333
 #define KV_PEER_NUM 512
@@ -14,6 +15,7 @@ typedef struct _PeerData {
     // data on both server and client side
     struct ibv_qp * qp; // the qp for communication
     struct ibv_mr * mr; // the mr for send/recv only local access
+    size_t peerId;      // the id of the peer
 
     // data on client side
     uint64_t tableAddr;
@@ -67,8 +69,16 @@ void CMServerConnect(ConnectionManager * cm);
 // client connect to servers
 int CMClientConnect(ConnectionManager * cm);
 
+// a wrapper for post recv
+int CMPostRecv(ConnectionManager * cm, uint64_t peerId);
+// a wrapper for post send
+int CMPostSend(ConnectionManager * cm, uint64_t nodeId, RPCMessage * message);
 
+// a wrapper for poll cq
+int CMPollOnce(ConnectionManager * cm, __out uint64_t * nodeId);
 
+// a wrapper for RDMA READ
+int CMReadTable(ConnectionManager * cm, uint64_t nodeId, void * addr, uint64_t len);
 
 
 #endif

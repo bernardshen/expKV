@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include "base_table.h"
 #include "spinlock.h"
+#include "kvTypes.h"
 #include "mm.h"
 
 #define SIMPLE_TABLE_SIZE 256
@@ -18,7 +19,7 @@ typedef struct _SimpleTableItem {
     // 1: valid
     // 2: keylen
     spinlock lock;                         // used to lock the item
-    char key[16];
+    char key[KV_KEYLEN_LIMIT];
     int64_t value[2];
     struct _SimpleTableItem * next;  // point to the next item with same hashkey
 } SimpleTableItem;

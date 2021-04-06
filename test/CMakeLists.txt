@@ -7,5 +7,5 @@ add_executable(testCMClient testCMClient.c)
 
 target_link_libraries(testSimpleTable MyKV ssl ibverbs)
 target_link_libraries(testMM MyKV ssl ibverbs)
-target_link_libraries(testCMServer MyKV ssl ibverbs)
+target_link_libraries(testCMServer MyKV ssl ibverbs pthread)
 target_link_libraries(testCMClient MyKV ssl ibverbs)

@@ -34,7 +34,7 @@ static inline uint64_t ntohll(uint64_t x) { return x; }
 #endif
 
 // ------ private functions ------
-static int post_receive(PeerData * peer) {
+static int post_recv(PeerData * peer) {
 	struct ibv_recv_wr rr;
 	struct ibv_sge sge;
 	struct ibv_recv_wr *bad_wr;
@@ -42,7 +42,7 @@ static int post_receive(PeerData * peer) {
 	/* prepare the scatter/gather entry */
 	memset(&sge, 0, sizeof(sge));
 	sge.addr = (uintptr_t)peer->mr->addr;
-	sge.length = 100;
+	sge.length = KV_LOCAL_MR_SIZE;
 	sge.lkey = peer->mr->lkey;
 	/* prepare the receive work request */
 	memset(&rr, 0, sizeof(rr));
@@ -54,9 +54,66 @@ static int post_receive(PeerData * peer) {
 	rc = ibv_post_recv(peer->qp, &rr, &bad_wr);
 	if (rc)
 		fprintf(stderr, "failed to post RR\n");
-	else
-		fprintf(stdout, "Receive Request was posted\n");
-	return rc;
+    
+	return rc; // return success here
+}
+
+// Called to SEND the buffer in the local memory to remote side
+// The buffer must be prepared before calling
+static int post_send(PeerData * peer) {
+    struct ibv_send_wr sr;
+    struct ibv_send_wr * badWr = NULL;
+    struct ibv_sge sge;
+    int rc;
+    // prepare sge
+    memset(&sge, 0, sizeof(sge));
+    sge.addr = (uintptr_t)(peer->mr->addr);
+    sge.length = KV_LOCAL_MR_SIZE;
+    sge.lkey = peer->mr->lkey;
+    // prepare sr
+    memset(&sr, 0, sizeof(sr));
+    sr.next = NULL;
+    sr.wr_id = peer->peerId;
+    sr.sg_list = &sge;
+    sr.num_sge = 1;
+    sr.opcode = IBV_WR_SEND;
+    sr.send_flags = IBV_SEND_SIGNALED;
+    // call post send
+    rc = ibv_post_send(peer->qp, &sr, &badWr);
+    if (rc) {
+        printf("ibv_post_send send failed\n");
+        return -1;
+    }
+    return 0; // return success here
+}
+
+static int post_read(PeerData * peer, uintptr_t addr, uint64_t len, uint32_t rkey) {
+    struct ibv_send_wr sr;
+    struct ibv_send_wr * badWr = NULL;
+    struct ibv_sge sge;
+    int rc;
+    // prepare sge
+    memset(&sge, 0, sizeof(sge));
+    sge.addr = (uintptr_t)(peer->mr->addr);
+    sge.length = len;
+    sge.lkey = peer->mr->lkey;
+    // prepare sr
+    memset(&sr, 0, sizeof(sr));
+    sr.next = NULL;
+    sr.wr_id = peer->peerId;
+    sr.sg_list = &sge;
+    sr.num_sge = 1;
+    sr.opcode = IBV_WC_RDMA_READ;
+    sr.send_flags = IBV_SEND_SIGNALED;
+    sr.wr.rdma.remote_addr = addr;
+    sr.wr.rdma.rkey = rkey;
+    // post send
+    rc = ibv_post_send(peer->qp, &sr, &badWr);
+    if (rc) {
+        printf("ibv_post_send read failed\n");
+        return -1;
+    }
+    return 0; // return success here
 }
 
 // create some common datastructures (ibv_ctx, ibv_pd, ibv_cq)
@@ -428,7 +485,7 @@ static int serverConnectQP(ConnectionManager * cm, PeerData * peer, int sockfd) 
         printf("modify_qp_to_rtr failed\n");
         return -1;
     }
-    ret = post_receive(peer);
+    ret = post_recv(peer);
     if (ret) {
         printf("Failed to post initial rr\n");
         return -1;
@@ -440,11 +497,14 @@ static int serverConnectQP(ConnectionManager * cm, PeerData * peer, int sockfd) 
     }
 
     // sync before client can send requests
-    char tmpChar;
-    if (sockSyncData(sockfd, 1, "R", &tmpChar)) {
+    // use this sync to tell client their id
+    uint64_t nodeId = htonll(cm->peerNum);
+    uint64_t tmpId;
+    if (sockSyncData(sockfd, sizeof(uint64_t), &nodeId, &tmpId)) {
         printf("sock_sync_data 2 failed\n");
         return -1;
     }
+    peer->peerId = cm->peerNum;
 
     return 0; // return success here
 }
@@ -532,11 +592,16 @@ static int clientConnectQP(ConnectionManager * cm, PeerData * peer) {
     }
 
     // sync before client can send requests
-    char tmpChar;
-    if (sockSyncData(cm->sock, 1, "R", &tmpChar)) {
+    // use this to get the nodeId from server
+    uint64_t nodeId = htonll(cm->peerNum);
+    uint64_t tmpId = 0;
+    if (sockSyncData(cm->sock, sizeof(uint64_t), &nodeId, &tmpId)) {
         printf("sock_sync_data 2 failed\n");
         return -1;
     }
+    nodeId = ntohll(tmpId);
+    peer->peerId = nodeId;
+    printf("Client id: %ld\n", nodeId);
 
     return 0; // return success here
 }
@@ -620,4 +685,74 @@ int CMServerRegisterMR(ConnectionManager * cm, MemoryManager * mm) {
     cm->tableMR = mm->tableMR;
     cm->itemPoolMr = mm->itemPoolMR;
     return 0;
+}
+
+
+// ------ Wrapper Functions ------
+// a wrapper for post recv
+int CMPostRecv(ConnectionManager * cm, uint64_t peerId) {
+    PeerData * peer = cm->peers[peerId];
+    int ret = -1;
+    ret = post_recv(peer);
+    if (ret < 0) {
+        printf("post_receive failed\n");
+        return -1;
+    }
+    return 0; // return success here
+}
+
+// a wrapper for post send
+int CMPostSend(ConnectionManager * cm, uint64_t nodeId, RPCMessage * message) {
+    int ret = -1;
+    PeerData * peer = cm->peers[nodeId];
+    RPCMessage tmpMsg;
+
+    // serialize the message
+    tmpMsg.reqType = htonl(message->reqType);
+    tmpMsg.nodeId = htonll(message->nodeId);
+    memcpy(tmpMsg.key, message->key, KV_KEYLEN_LIMIT);
+    tmpMsg.value = htonll(message->value);
+
+    // prepare message
+    memcpy(peer->mr->addr, &tmpMsg, sizeof(RPCMessage));
+    
+    // call post
+    ret = post_send(peer);
+    if (ret < 0) {
+        printf("post send failed\n");
+        return -1;
+    }
+    return 0; // return success here
+}
+
+// a wrapper for poll cq
+int CMPollOnce(ConnectionManager * cm, __out uint64_t * nodeId) {
+    struct ibv_wc wc;
+    int count = 0;
+    count = ibv_poll_cq(cm->cq, 1, &wc);
+    if (count == 0) {
+        return 0;
+    } else if (count < 0) {
+        printf("ibv_poll_cq failed\n");
+        return -1;  // indicate poll cq failed
+    }
+    if (wc.status != IBV_WC_SUCCESS) {
+        printf("wc failed status %s (%d) for wr_id %d\n", 
+               ibv_wc_status_str(wc.status), wc.status, (int)wc.wr_id);
+        return -2;  // indicate wc failed
+    }
+    return count;
+}
+
+// a wrapper for RDMA READ
+int CMReadTable(ConnectionManager * cm, uint64_t nodeId, void * addr, uint64_t len) {
+    int ret = -1;
+    PeerData * peer = cm->peers[nodeId];
+    uint32_t rkey = peer->tableRKey;
+    ret = post_read(peer, (uintptr_t)addr, len, rkey);
+    if (ret < 0) {
+        printf("post_read failed\n");
+        return -1;
+    }
+    return 0; // return success here
 }
