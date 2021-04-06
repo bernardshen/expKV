@@ -42,8 +42,10 @@ int main() {
     ret = pthread_create(&ptid, NULL, testth1, (void *)&cm);
     checkErr(ret, "create thread");
 
+    testName("CMPollOnce");
+    uint64_t nid = -1;
     while (1) {
-        int c = CMPollOnce(&cm, 0);
+        int c = CMPollOnce(&cm, &nid);
         checkErr(c, "CMPollOnce");
         if (c > 0) {
             break;
@@ -52,7 +54,8 @@ int main() {
     RPCMessage *c = cm.peers[0]->mr->addr;
     c->reqType = ntohl(c->reqType);
     printf("key: %c%c%c\n", c->key[0], c->key[1], c->key[2]);
-    printf("value: %d\n", ntohll(c->value));
+    printf("value: %ld\n", ntohll(c->value));
+    printf("wrid: %ld\n", nid);
 
     pthread_join(ptid, NULL);
     return 0;

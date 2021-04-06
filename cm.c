@@ -729,6 +729,7 @@ int CMPostSend(ConnectionManager * cm, uint64_t nodeId, RPCMessage * message) {
 int CMPollOnce(ConnectionManager * cm, __out uint64_t * nodeId) {
     struct ibv_wc wc;
     int count = 0;
+    *nodeId = -1;
     count = ibv_poll_cq(cm->cq, 1, &wc);
     if (count == 0) {
         return 0;
@@ -741,6 +742,7 @@ int CMPollOnce(ConnectionManager * cm, __out uint64_t * nodeId) {
                ibv_wc_status_str(wc.status), wc.status, (int)wc.wr_id);
         return -2;  // indicate wc failed
     }
+    *nodeId = wc.wr_id;
     return count;
 }
 
