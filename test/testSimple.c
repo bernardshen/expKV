@@ -6,8 +6,15 @@
 
 int main() {
     BaseTable t;
+    MemoryManager mm;
     int ret;
-    ret = initTable(&t, SIMPLE);
+
+    testName("initMM");
+    ret = initMM(&mm, SIMPLE);
+    checkErr(ret, "initMM");
+
+    testName("initTable");
+    ret = initTable(&t, &mm, SIMPLE);
     checkErr(ret, "initTable");
 
     int64_t v = 16;
