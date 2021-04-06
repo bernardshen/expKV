@@ -44,7 +44,7 @@ int simpleTablePut(BaseTable * table, char * key, size_t klen, char * value, siz
         // find potential keys
         SimpleTableItem * p;
         for (p = item; p; p = p->next) {
-            size_t pklen = SIMPLE_TABLE_ITEM_KEYLEN(item->itemVec);
+            size_t pklen = SIMPLE_TABLE_ITEM_KEYLEN(p->itemVec);
             if (compare_key(p->key, pklen, key, klen)) { 
                 // update the item
                 p->value[0] = *(int64_t *)value;

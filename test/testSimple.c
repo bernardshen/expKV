@@ -86,12 +86,15 @@ int main() {
         checkErr(ret, "del");
     }
 
-        for (int64_t i = 0; i < 100; i ++) {
+    for (int64_t i = 0; i < 100; i ++) {
         char buf[16];
         sprintf(buf, "1111%ld", i);
         int keylen = strlen(buf);
         printf("get(%s)\n", buf);
         ret = t.get(&t, buf, keylen, (char *)&retv, &retlen);
+        if (ret == 0) {
+            printKV(buf, keylen, retv);
+        }
         checkErr(ret, "get");
         // printKV(buf, keylen, retv);
     }
