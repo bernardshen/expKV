@@ -45,8 +45,12 @@ typedef struct _ConnectionManager {
     struct ibv_pd * pd;             // share pd
     struct ibv_cq * cq;             // share cq
     struct ibv_port_attr portAttr;  // share portAttr
+    // ---- only cq poller/client will alter cq structure ----
+    // -> no need for lock
 
     // peer information **Append-only**
+    // only RPCServer Connector and a single client thread will alter this data
+    // -> no need for lock
     PeerData * peers[KV_PEER_NUM];              // record peer data
     size_t peerNum;                             // record peer number
 
