@@ -11,6 +11,8 @@
 #define KV_CONN_PORT 2333
 #define KV_PEER_NUM 512
 
+// TODO: Separate send and recv cq for optimization
+
 typedef struct _PeerData {
     // data on both server and client side
     struct ibv_qp * qp; // the qp for communication
@@ -76,7 +78,7 @@ int CMClientConnect(ConnectionManager * cm);
 // a wrapper for post recv
 int CMPostRecv(ConnectionManager * cm, uint64_t peerId);
 // a wrapper for post send
-int CMPostSend(ConnectionManager * cm, uint64_t nodeId, RPCMessage * message);
+int CMPostSend(ConnectionManager * cm, uint64_t nodeId, void * message, size_t mlen);
 
 // a wrapper for poll cq
 int CMPollOnce(ConnectionManager * cm, __out uint64_t * nodeId);

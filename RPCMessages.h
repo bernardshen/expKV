@@ -6,12 +6,20 @@
 #include <stdlib.h>
 
 struct _RPCMessage {
-    ReqType reqType;
-    uint64_t  nodeId;
-    char    key[KV_KEYLEN_LIMIT];
-    int64_t value;
+    ReqType     reqType;
+    uint64_t    nodeId;
+    char        key[KV_KEYLEN_LIMIT];
+    uint64_t    klen;
+    int64_t     value;
+    uint64_t    vlen;
 } __attribute__((packed));
 
 typedef struct _RPCMessage RPCMessage;
+
+struct _RPCReply {
+    int32_t    success; // 0 - success, -1 - fail
+} __attribute__((packed));
+
+typedef struct _RPCReply RPCReply;
 
 #endif

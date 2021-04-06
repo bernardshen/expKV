@@ -15,6 +15,7 @@
 #include <byteswap.h>
 #include <errno.h>
 #include "mm.h"
+#include "utils.h"
 
 #define KV_CQ_SIZE 10
 #define KV_TCP_PORT "2333"
@@ -22,16 +23,6 @@
 #define KV_LOCAL_MR_SIZE 512
 #define KV_RDMA_PROTNUM 1
 #define KV_RDMA_GIDIDX 0
-
-#if __BYTE_ORDER == __LITTLE_ENDIAN
-static inline uint64_t htonll(uint64_t x) { return bswap_64(x); }
-static inline uint64_t ntohll(uint64_t x) { return bswap_64(x); }
-#elif __BYTE_ORDER == __BIG_ENDIAN
-static inline uint64_t htonll(uint64_t x) { return x; }
-static inline uint64_t ntohll(uint64_t x) { return x; }
-#else
-#error __BYTE_ORDER is neither __LITTLE_ENDIAN nor __BIG_ENDIAN
-#endif
 
 // ------ private functions ------
 static int post_recv(PeerData * peer) {
@@ -702,19 +693,13 @@ int CMPostRecv(ConnectionManager * cm, uint64_t peerId) {
 }
 
 // a wrapper for post send
-int CMPostSend(ConnectionManager * cm, uint64_t nodeId, RPCMessage * message) {
+// need to serialize the message before sending
+int CMPostSend(ConnectionManager * cm, uint64_t nodeId, void * message, size_t mlen) {
     int ret = -1;
     PeerData * peer = cm->peers[nodeId];
-    RPCMessage tmpMsg;
-
-    // serialize the message
-    tmpMsg.reqType = htonl(message->reqType);
-    tmpMsg.nodeId = htonll(message->nodeId);
-    memcpy(tmpMsg.key, message->key, KV_KEYLEN_LIMIT);
-    tmpMsg.value = htonll(message->value);
 
     // prepare message
-    memcpy(peer->mr->addr, &tmpMsg, sizeof(RPCMessage));
+    memcpy(peer->mr->addr, message, mlen);
     
     // call post
     ret = post_send(peer);
@@ -742,7 +727,13 @@ int CMPollOnce(ConnectionManager * cm, __out uint64_t * nodeId) {
                ibv_wc_status_str(wc.status), wc.status, (int)wc.wr_id);
         return -2;  // indicate wc failed
     }
-    *nodeId = wc.wr_id;
+    
+    // set nodeId for dispatcher
+    *nodeId = -1; // -1 indicate self
+    // only set nodeId when the wc is recv
+    if (wc.opcode == IBV_WC_RECV) {
+        *nodeId = wc.wr_id;
+    }
     return count;
 }
 

@@ -8,9 +8,9 @@
 typedef struct _BaseTable {
     void * table;
     MemoryManager * mm;
-    int (*put)(void * table, char * key, size_t klen, char * value, size_t vlen);
-    int (*get)(void * table, char * key, size_t klen, char * value, size_t *vlen);
-    int (*del)(void * table, char * key, size_t klen);
+    int (*put)(struct _BaseTable * table, char * key, size_t klen, char * value, size_t vlen);
+    int (*get)(struct _BaseTable * table, char * key, size_t klen, char * value, size_t *vlen);
+    int (*del)(struct _BaseTable * table, char * key, size_t klen);
 } BaseTable;
 
 int initTable(BaseTable * t, MemoryManager * mm, TableType type);

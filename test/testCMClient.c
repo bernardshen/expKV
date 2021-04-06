@@ -1,6 +1,7 @@
 #include "cm.h"
 #include "mm.h"
 #include "testUtil.h"
+#include "utils.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -18,10 +19,10 @@ int main() {
 
     testName("CMPostSend");
     RPCMessage msg;
-    msg.reqType = PUT;
-    msg.value = 10;
+    msg.reqType = htonl(PUT);
+    msg.value = htonll(10);
     memcpy(msg.key, "aaa", 3);
-    ret = CMPostSend(&cm, 0, &msg);
+    ret = CMPostSend(&cm, 0, &msg, sizeof(RPCMessage));
     checkErr(ret, "CMPostSend");
 
     testName("CMPollOnce");
