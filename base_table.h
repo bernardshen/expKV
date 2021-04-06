@@ -13,6 +13,6 @@ typedef struct _BaseTable {
     int (*del)(void * table, char * key, size_t klen);
 } BaseTable;
 
-int initTable(BaseTable * t, TableType type);
+int initTable(BaseTable * t, MemoryManager * mm, TableType type);
 
 #endif

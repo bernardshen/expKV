@@ -2,12 +2,11 @@
 #include "simple_table.h"
 #include "mm.h"
 
-int initTable(BaseTable * t, TableType type) {
+int initTable(BaseTable * t, MemoryManager * mm, TableType type) {
     int ret = -1;
 
-    // init memory manager
-    t->mm = (MemoryManager *)malloc(sizeof(MemoryManager));
-    initMM(t->mm, type);
+    // store memory manager
+    t->mm = mm;
     
     // init table
     switch (type)
