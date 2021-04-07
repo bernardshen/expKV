@@ -12,7 +12,7 @@
 typedef struct _RPCServerWorkerReq {
     ConnectionManager * cm;
     BaseTable * table;
-    uint64_t nodeId;
+    int64_t nodeId;
 } RPCServerWorkerReq;
 
 typedef struct _RPCServer {

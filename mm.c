@@ -62,6 +62,7 @@ int initMM(MemoryManager * mm, TableType type) {
     mm->itemSize = itemSize;
     mm->ttype = type;
     mm->tableAllocated = 0;
+    mm->MRRegistered = 0;
     spin_unlock(&(mm->lock));
 
     // initialize free list and alloc list

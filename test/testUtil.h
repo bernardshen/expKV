@@ -16,11 +16,9 @@ void printKV(char * k, size_t klen, int64_t value) {
 void checkErr(int ret, char * str) {
     if (ret < 0) {
         printf("%s error\n", str);
-        nl();
         return;
     }
     printf("%s success\n", str);
-    nl();
 }
 
 void nl() {
@@ -30,6 +28,17 @@ void nl() {
 void testName(char * str) {
     nl();
     printf("===== %s =====\n", str);
+}
+
+void testEnd(int ret) {
+    char *pass = NULL;
+    if (ret < 0) {
+        pass = "fail";
+    } else {
+        pass = "pass";
+    }
+    printf("===== %s =====\n", pass);
+    nl();
 }
 
 #endif

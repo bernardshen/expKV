@@ -42,7 +42,7 @@ static int workerServeReply(RPCServerWorkerReq * workerReq, int32_t success) {
     memcpy(peer->mr->addr, &reply, sizeof(RPCReply));
     
     // postSend
-    ret = CMPostSend(cm, peer, &reply, sizeof(reply));
+    ret = CMPostSend(cm, workerReq->nodeId, &reply, sizeof(reply));
     if (ret < 0) {
         printf("CMPostSend failed\n");
         return -1;
@@ -71,7 +71,7 @@ static int workerServePut(BaseTable * table, RPCMessage * msg) {
     return 0; // return success here
 }
 
-static workerDel(BaseTable * table, RPCMessage * msg) {
+static workerServeDel(BaseTable * table, RPCMessage * msg) {
     int ret = -1;
 
     // get k, v
@@ -141,7 +141,7 @@ static void RPCServerDispatcher(void * _rpcServer) {
     RPCServer * rpcServer = (RPCServer *)_rpcServer;
     int c = 0;
     while (1) {
-        uint64_t nodeId = -1;
+        int64_t nodeId = -1;
         c = CMPollOnce(&(rpcServer->cm), &nodeId);
         if (c < 0) {
             // some error happen when polling cq 
@@ -167,7 +167,7 @@ static void RPCServerDispatcher(void * _rpcServer) {
             int ret = pthread_create(&tid, NULL, RPCServerWorker, workerReq);
             if (ret < 0) {
                 printf("Failed to generate worker thread\n");
-                free(nodeId);
+                free(workerReq);
             } else {
                 // add the thread to the rpcServer
                 rpcServer->threads[rpcServer->numThreads] = tid;
@@ -186,6 +186,7 @@ int initRPCServer(RPCServer * rpcServer, TableType tableType) {
 
     // initialize mm **Need to be initialized first**
     // BaseTable and CM depends on MM
+    printf("RPCServer: initMM\n");
     ret = initMM(&(rpcServer->mm), tableType);
     if (ret < 0) {
         printf("initMM failed\n");
@@ -193,6 +194,7 @@ int initRPCServer(RPCServer * rpcServer, TableType tableType) {
     }
 
     // initialize table
+    printf("RPCServer: initTable\n");
     ret = initTable(&(rpcServer->table), &(rpcServer->mm), SIMPLE);
     if (ret < 0) {
         printf("initTable failed\n");
@@ -200,6 +202,7 @@ int initRPCServer(RPCServer * rpcServer, TableType tableType) {
     }
 
     // initialize CM
+    printf("RPCServer: initCM\n");
     ret = initCM(&(rpcServer->cm), SERVER);
     if (ret < 0) {
         printf("initCM failed\n");
@@ -207,6 +210,7 @@ int initRPCServer(RPCServer * rpcServer, TableType tableType) {
     }
 
     // register mr
+    printf("RPCServer: Registering MR\n");
     ret = CMServerRegisterMR(&(rpcServer->cm), &(rpcServer->mm));
     if (ret < 0) {
         printf("CMRegisterMR failed\n");

@@ -17,13 +17,14 @@ typedef struct _PeerData {
     // data on both server and client side
     struct ibv_qp * qp; // the qp for communication
     struct ibv_mr * mr; // the mr for send/recv only local access
-    size_t peerId;      // the id of the peer
+    int64_t peerId;      // the id of the peer
 
     // data on client side
     uint64_t tableAddr;
     uint64_t itemPoolAddr;
     uint32_t tableRKey;
     uint32_t itemPoolRKey;
+    int64_t  remotePeerId;
 } PeerData;
 
 
@@ -76,15 +77,15 @@ void CMServerConnect(ConnectionManager * cm);
 int CMClientConnect(ConnectionManager * cm);
 
 // a wrapper for post recv
-int CMPostRecv(ConnectionManager * cm, uint64_t peerId);
+int CMPostRecv(ConnectionManager * cm, int64_t peerId);
 // a wrapper for post send
-int CMPostSend(ConnectionManager * cm, uint64_t nodeId, void * message, size_t mlen);
+int CMPostSend(ConnectionManager * cm, int64_t nodeId, void * message, size_t mlen);
 
 // a wrapper for poll cq
-int CMPollOnce(ConnectionManager * cm, __out uint64_t * nodeId);
+int CMPollOnce(ConnectionManager * cm, __out int64_t * nodeId);
 
 // a wrapper for RDMA READ
-int CMReadTable(ConnectionManager * cm, uint64_t nodeId, void * addr, uint64_t len);
+int CMReadTable(ConnectionManager * cm, int64_t nodeId, void * addr, uint64_t len);
 
 
 #endif

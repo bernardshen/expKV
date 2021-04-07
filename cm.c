@@ -38,7 +38,7 @@ static int post_recv(PeerData * peer) {
 	/* prepare the receive work request */
 	memset(&rr, 0, sizeof(rr));
 	rr.next = NULL;
-	rr.wr_id = 0;
+	rr.wr_id = peer->peerId;
 	rr.sg_list = &sge;
 	rr.num_sge = 1;
 	/* post the Receive Request to the RQ */
@@ -464,6 +464,7 @@ static int serverConnectQP(ConnectionManager * cm, PeerData * peer, int sockfd) 
     peer->tableRKey = NULL;
     peer->qp = qp;
     peer->mr = lmr;
+    peer->peerId = cm->peerNum;
 
     // connect qp
     ret = modify_qp_to_init(qp);
@@ -476,11 +477,14 @@ static int serverConnectQP(ConnectionManager * cm, PeerData * peer, int sockfd) 
         printf("modify_qp_to_rtr failed\n");
         return -1;
     }
+
+    // server post initial recv Request
     ret = post_recv(peer);
-    if (ret) {
-        printf("Failed to post initial rr\n");
+    if (ret < 0) {
+        printf("server failed to post inital recv request\n");
         return -1;
     }
+
     ret = modify_qp_to_rts(qp);
     if (ret) {
         printf("modify_qp_to_rts failed\n");
@@ -489,9 +493,9 @@ static int serverConnectQP(ConnectionManager * cm, PeerData * peer, int sockfd) 
 
     // sync before client can send requests
     // use this sync to tell client their id
-    uint64_t nodeId = htonll(cm->peerNum);
-    uint64_t tmpId;
-    if (sockSyncData(sockfd, sizeof(uint64_t), &nodeId, &tmpId)) {
+    int64_t nodeId = htonll(cm->peerNum);
+    int64_t tmpId;
+    if (sockSyncData(sockfd, sizeof(int64_t), &nodeId, &tmpId)) {
         printf("sock_sync_data 2 failed\n");
         return -1;
     }
@@ -591,8 +595,9 @@ static int clientConnectQP(ConnectionManager * cm, PeerData * peer) {
         return -1;
     }
     nodeId = ntohll(tmpId);
-    peer->peerId = nodeId;
+    peer->remotePeerId = nodeId;
     printf("Client id: %ld\n", nodeId);
+    peer->peerId = cm->peerNum;
 
     return 0; // return success here
 }
@@ -632,6 +637,10 @@ void CMServerConnect(ConnectionManager * cm) {
         printf("client connected\n");
         // allocate new peer structure
         PeerData *peer = (PeerData *)malloc(sizeof(PeerData));
+        if (peer == NULL) {
+            printf("malloc peer failed\n");
+            continue;
+        }
         succ = serverConnectQP(cm, peer, new_fd);
         if (succ < 0) {
             printf("client qp connect failed\n");
@@ -681,7 +690,7 @@ int CMServerRegisterMR(ConnectionManager * cm, MemoryManager * mm) {
 
 // ------ Wrapper Functions ------
 // a wrapper for post recv
-int CMPostRecv(ConnectionManager * cm, uint64_t peerId) {
+int CMPostRecv(ConnectionManager * cm, int64_t peerId) {
     PeerData * peer = cm->peers[peerId];
     int ret = -1;
     ret = post_recv(peer);
@@ -694,7 +703,7 @@ int CMPostRecv(ConnectionManager * cm, uint64_t peerId) {
 
 // a wrapper for post send
 // need to serialize the message before sending
-int CMPostSend(ConnectionManager * cm, uint64_t nodeId, void * message, size_t mlen) {
+int CMPostSend(ConnectionManager * cm, int64_t nodeId, void * message, size_t mlen) {
     int ret = -1;
     PeerData * peer = cm->peers[nodeId];
 
@@ -711,7 +720,7 @@ int CMPostSend(ConnectionManager * cm, uint64_t nodeId, void * message, size_t m
 }
 
 // a wrapper for poll cq
-int CMPollOnce(ConnectionManager * cm, __out uint64_t * nodeId) {
+int CMPollOnce(ConnectionManager * cm, __out int64_t * nodeId) {
     struct ibv_wc wc;
     int count = 0;
     *nodeId = -1;
@@ -738,7 +747,7 @@ int CMPollOnce(ConnectionManager * cm, __out uint64_t * nodeId) {
 }
 
 // a wrapper for RDMA READ
-int CMReadTable(ConnectionManager * cm, uint64_t nodeId, void * addr, uint64_t len) {
+int CMReadTable(ConnectionManager * cm, int64_t nodeId, void * addr, uint64_t len) {
     int ret = -1;
     PeerData * peer = cm->peers[nodeId];
     uint32_t rkey = peer->tableRKey;
