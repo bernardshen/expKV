@@ -13,7 +13,7 @@ static void RPCServerConnectorThread(void * cm) {
     CMServerConnect(_cm);   // loop forever never return
 }
 
-static int workerServeReply(RPCServerWorkerReq * workerReq, int32_t success) {
+static int workerServeReply(RPCServerWorkerReq * workerReq, int32_t success, int64_t value, uint64_t vlen) {
     // need to post recv before post send
     // client can only post one request at a time
     // client will not post another send before receiving from the server
@@ -35,6 +35,8 @@ static int workerServeReply(RPCServerWorkerReq * workerReq, int32_t success) {
     // prepare reply
     RPCReply reply;
     reply.success = htonl(success);
+    reply.value = htonll(value);
+    reply.vlen = htonll(vlen);
 
     // TODO: use inline send
     // set reply to the same buffer
@@ -71,6 +73,25 @@ static int workerServePut(BaseTable * table, RPCRequest * msg) {
     return 0; // return success here
 }
 
+static workerServeGet(BaseTable * table, RPCRequest * msg, int64_t * value, uint64_t * vlen) {
+    int ret = -1;
+
+    // get k, v
+    char key[KV_KEYLEN_LIMIT];
+    uint64_t klen;
+
+    memcpy(key, msg->key, KV_KEYLEN_LIMIT);
+    klen = msg->klen;
+
+    ret = table->get(table, key, klen, &value, vlen);
+    if (ret < 0) {
+        printf("table->get failed\n");
+        return -1;
+    }
+
+    return 0; // return success here
+}
+
 static workerServeDel(BaseTable * table, RPCRequest * msg) {
     int ret = -1;
 
@@ -92,6 +113,8 @@ static workerServeDel(BaseTable * table, RPCRequest * msg) {
 static void RPCServerWorker(void * _workerReq) {
     // convert data structure
     int ret = -1;
+    int64_t value = 0;
+    uint64_t vlen = 0;
     RPCServerWorkerReq * workerReq = (RPCServerWorkerReq *)_workerReq;
     
     // get peer
@@ -115,20 +138,27 @@ static void RPCServerWorker(void * _workerReq) {
     case PUT:
         ret = workerServePut(workerReq->table, &msg);
         if (ret < 0) {
-            printf("workerPut failed\n");
+            printf("workerServePut failed\n");
+        }
+        break;
+    case GET:
+        ret = workerServeGet(workerReq->table, &msg, &value, &vlen);
+        if (ret < 0) {
+            printf("workerServeGet failed\n");
         }
         break;
     case DEL:
         ret = workerServeDel(workerReq->table, &msg);
         if (ret < 0) {
-            printf("workerDel failed\n");
+            printf("workerServeDel failed\n");
         }
+        break;
     default:
         ret = -1;
     }   
 
     // reply to client
-    ret = workerServeReply(workerReq, ret);
+    ret = workerServeReply(workerReq, ret, value, vlen);
     if (ret < 0) {
         printf("workerServeReply failed\n");
     }
