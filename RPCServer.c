@@ -83,7 +83,7 @@ static workerServeGet(BaseTable * table, RPCRequest * msg, int64_t * value, uint
     memcpy(key, msg->key, KV_KEYLEN_LIMIT);
     klen = msg->klen;
 
-    ret = table->get(table, key, klen, &value, vlen);
+    ret = table->get(table, key, klen, value, vlen);
     if (ret < 0) {
         printf("table->get failed\n");
         return -1;

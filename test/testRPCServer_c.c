@@ -48,4 +48,27 @@ int main() {
         }
     }
     testEnd(ret);
+
+    testName("client get");
+    message.reqType = htonl(GET);
+    ret = CMPostRecv(&cm, 0);
+    checkErr(ret, "CMPostRecv");
+    ret = CMPostSend(&cm, 0, &message, sizeof(RPCRequest));
+    checkErr(ret, "CMPostSend");
+    while (1) {
+        int64_t nodeId;
+        int c;
+        c = CMPollOnce(&cm, &nodeId);
+        checkErr(c, "CMPollOnce");
+        if (c > 0) {
+            if (nodeId < 0) {
+                continue;
+            }
+            RPCReply * reply = (RPCReply *)cm.peers[nodeId]->mr->addr;
+            printf("success %d value %ld\n", ntohl(reply->success), ntohll(reply->value));
+            break;
+        }
+    }
+    testEnd(ret);
+
 }
