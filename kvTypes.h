@@ -13,6 +13,7 @@ typedef enum _TableType {
 typedef enum _ReqType {
     PUT,
     DEL,
+    GET,
 } ReqType;
 
 typedef enum _NodeType {

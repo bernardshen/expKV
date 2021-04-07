@@ -18,11 +18,11 @@ int main() {
     checkErr(ret, "CMClientConnect");
 
     testName("CMPostSend");
-    RPCMessage msg;
+    RPCRequest msg;
     msg.reqType = htonl(PUT);
     msg.value = htonll(10);
     memcpy(msg.key, "aaa", 3);
-    ret = CMPostSend(&cm, 0, &msg, sizeof(RPCMessage));
+    ret = CMPostSend(&cm, 0, &msg, sizeof(RPCRequest));
     checkErr(ret, "CMPostSend");
 
     testName("CMPollOnce");

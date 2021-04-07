@@ -5,7 +5,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-struct _RPCMessage {
+struct _RPCRequest {
     ReqType     reqType;
     uint64_t    nodeId;
     char        key[KV_KEYLEN_LIMIT];
@@ -14,7 +14,7 @@ struct _RPCMessage {
     uint64_t    vlen;
 } __attribute__((packed));
 
-typedef struct _RPCMessage RPCMessage;
+typedef struct _RPCRequest RPCRequest;
 
 struct _RPCReply {
     int32_t    success; // 0 - success, -1 - fail

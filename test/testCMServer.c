@@ -51,7 +51,7 @@ int main() {
             break;
         }
     }
-    RPCMessage *c = cm.peers[0]->mr->addr;
+    RPCRequest *c = cm.peers[0]->mr->addr;
     c->reqType = ntohl(c->reqType);
     printf("key: %c%c%c\n", c->key[0], c->key[1], c->key[2]);
     printf("value: %ld\n", ntohll(c->value));

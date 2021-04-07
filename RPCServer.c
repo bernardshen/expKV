@@ -49,7 +49,7 @@ static int workerServeReply(RPCServerWorkerReq * workerReq, int32_t success) {
     }
 }
 
-static int workerServePut(BaseTable * table, RPCMessage * msg) {
+static int workerServePut(BaseTable * table, RPCRequest * msg) {
     int ret = -1;
     
     // get k, v
@@ -71,7 +71,7 @@ static int workerServePut(BaseTable * table, RPCMessage * msg) {
     return 0; // return success here
 }
 
-static workerServeDel(BaseTable * table, RPCMessage * msg) {
+static workerServeDel(BaseTable * table, RPCRequest * msg) {
     int ret = -1;
 
     // get k, v
@@ -98,10 +98,10 @@ static void RPCServerWorker(void * _workerReq) {
     PeerData * peer = workerReq->cm->peers[workerReq->nodeId];
     
     // get msg
-    RPCMessage * tmpMsg = (RPCMessage *)(peer->mr->addr);
-    RPCMessage msg;
+    RPCRequest * tmpMsg = (RPCRequest *)(peer->mr->addr);
+    RPCRequest msg;
     // deserialize
-    memset(&msg, 0, sizeof(RPCMessage));
+    memset(&msg, 0, sizeof(RPCRequest));
     msg.reqType = ntohl(tmpMsg->reqType);
     msg.nodeId = ntohll(tmpMsg->nodeId);
     memcpy(&msg.key, &(tmpMsg->key), KV_KEYLEN_LIMIT);

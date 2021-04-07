@@ -20,7 +20,7 @@ int main() {
     testEnd(ret);
 
     testName("test put");
-    RPCMessage message;
+    RPCRequest message;
     message.reqType = htonl(PUT);
     strcpy(message.key, "1111");
     message.klen = htonll(4);
@@ -31,7 +31,7 @@ int main() {
     ret = CMPostRecv(&cm, 0);
     checkErr(ret, "CMPostRecv");
     // post send then
-    ret = CMPostSend(&cm, 0, &message, sizeof(RPCMessage));
+    ret = CMPostSend(&cm, 0, &message, sizeof(RPCRequest));
     checkErr(ret, "CMPostSend");
     while(1) {
         int64_t nodeId;
