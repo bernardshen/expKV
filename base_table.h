@@ -5,6 +5,8 @@
 #include "mm.h"
 #include "kvTypes.h"
 
+// TODO: store network format of data in the table
+
 typedef struct _BaseTable {
     void * table;
     MemoryManager * mm;

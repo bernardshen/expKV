@@ -94,7 +94,7 @@ static int post_read(PeerData * peer, uintptr_t addr, uint64_t len, uint32_t rke
     sr.wr_id = peer->peerId;
     sr.sg_list = &sge;
     sr.num_sge = 1;
-    sr.opcode = IBV_WC_RDMA_READ;
+    sr.opcode = IBV_WR_RDMA_READ;
     sr.send_flags = IBV_SEND_SIGNALED;
     sr.wr.rdma.remote_addr = addr;
     sr.wr.rdma.rkey = rkey;
@@ -429,7 +429,7 @@ static int serverConnectQP(ConnectionManager * cm, PeerData * peer, int sockfd) 
     // prepare local data
     localConData.tableAddr = htonll((uintptr_t)(cm->tableMR->addr));
     localConData.tableRKey = htonl(cm->tableMR->rkey);
-    localConData.itemPoolRKey = htonll((uintptr_t)(cm->itemPoolMr->addr));
+    localConData.itemPoolAddr = htonll((uintptr_t)(cm->itemPoolMr->addr));
     localConData.itemPoolRKey = htonl(cm->itemPoolMr->rkey);
     localConData.qpNum = htonl(qp->qp_num);
     localConData.lid = htons(cm->portAttr.lid);
@@ -546,7 +546,7 @@ static int clientConnectQP(ConnectionManager * cm, PeerData * peer) {
     }
     remoteConData.tableAddr = ntohll(tmpConData.tableAddr);
     remoteConData.tableRKey = ntohl(tmpConData.tableRKey);
-    remoteConData.itemPoolRKey = ntohll(tmpConData.itemPoolAddr);
+    remoteConData.itemPoolAddr = ntohll(tmpConData.itemPoolAddr);
     remoteConData.itemPoolRKey = ntohl(tmpConData.itemPoolRKey);
     remoteConData.qpNum = ntohl(tmpConData.qpNum);
     remoteConData.lid = ntohs(tmpConData.lid);
@@ -669,6 +669,8 @@ int CMClientConnect(ConnectionManager * cm) {
     // save peer to cm
     cm->peers[cm->peerNum] = peer;
     cm->peerNum ++;
+    printf("tableAddr: 0x%08x, tableRkey: %d\n", peer->tableAddr, peer->tableRKey);
+    printf("poolAddr: 0x%08x, poolRkey: %d\n", peer->itemPoolAddr, peer->itemPoolRKey);
     return 0;
 }
 
@@ -684,6 +686,8 @@ int CMServerRegisterMR(ConnectionManager * cm, MemoryManager * mm) {
     // assign the two mr to the cm for connection management
     cm->tableMR = mm->tableMR;
     cm->itemPoolMr = mm->itemPoolMR;
+    printf("tableAddr: 0x%08x, tableSize: %d, tableRkey: %d\n", mm->tableMR->addr, mm->tableMR->length, mm->tableMR->rkey);
+    printf("poolAddr: 0x%08x, poolSize: %d, poolRkey: %d\n", mm->itemPoolMR->addr, mm->itemPoolMR->length, mm->itemPoolMR->rkey);
     return 0;
 }
 
