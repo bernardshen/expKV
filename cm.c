@@ -742,6 +742,8 @@ int CMPollOnce(ConnectionManager * cm, __out int64_t * nodeId) {
     // only set nodeId when the wc is recv
     if (wc.opcode == IBV_WC_RECV) {
         *nodeId = wc.wr_id;
+    } else if (wc.opcode == IBV_WC_RDMA_READ) {
+        *nodeId = -2; // -2 indicate rdma read success;
     }
     return count;
 }
@@ -757,4 +759,16 @@ int CMReadTable(ConnectionManager * cm, int64_t nodeId, void * addr, uint64_t le
         return -1;
     }
     return 0; // return success here
+}
+
+int CMReadItemPool(ConnectionManager * cm, int64_t nodeId, void * addr, uint64_t len) {
+    int ret = -1;
+    PeerData * peer = cm->peers[nodeId];
+    uint32_t rkey = peer->itemPoolRKey;
+    ret = post_read(peer, (uintptr_t)addr, len, rkey);
+    if (ret < 0) {
+        printf("post_read failed\n");
+        return -1;
+    }
+    return 0; //return success here
 }

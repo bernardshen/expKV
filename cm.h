@@ -84,8 +84,10 @@ int CMPostSend(ConnectionManager * cm, int64_t nodeId, void * message, size_t ml
 // a wrapper for poll cq
 int CMPollOnce(ConnectionManager * cm, __out int64_t * nodeId);
 
-// a wrapper for RDMA READ
+// a wrapper for remote table access
 int CMReadTable(ConnectionManager * cm, int64_t nodeId, void * addr, uint64_t len);
 
+// a wrapper for remote itempool access
+int CMReadItemPool(ConnectionManager * cm, int64_t nodeId, void * addr, uint64_t len);
 
 #endif
