@@ -53,7 +53,7 @@ static int simpleTableRDMAReadTable(ConnectionManager * cm, char * key, uint64_t
     }
 
     // get reply
-    ret = clientWaitReply(cm, (void **)&item);
+    ret = clientWaitReply(cm, (void **)item);
     if (ret < 0) {
         printf("clientWaitReply failed\n");
         return -1;
@@ -72,7 +72,7 @@ static int simpleTableRDMAReadItem(ConnectionManager * cm, uintptr_t itemAddr, _
     }
 
     // get reply
-    ret = clientWaitReply(cm, (void **)&item);
+    ret = clientWaitReply(cm, (void **)item);
     if (ret < 0) {
         printf("clientWaitReply failed\n");
         return -1;
@@ -85,7 +85,7 @@ static int simpleTableRemoteGet(RPCClient * rpcClient, char * key, uint64_t klen
     ConnectionManager * cm = &(rpcClient->cm);
 
     // get the first item
-    SimpleTableItem * item;
+    SimpleTableItem * item = NULL;
     ret = simpleTableRDMAReadTable(cm, key, klen, &item);
     if (ret < 0) {
         printf("simpleTableRDMAReadTable failed\n");

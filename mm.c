@@ -33,6 +33,7 @@ void * itemIndex2Addr(MemoryManager * mm, size_t index) {
     assert(index < ITEM_POOL_SIZE);
     uint64_t offset = index * (mm->itemSize);
     uint64_t addr = (uint64_t)(mm->itemPool) + offset;
+    assert(addr >= mm->itemPoolMR->addr || addr < (mm->itemPoolMR->addr + mm->itemPoolMR->length));
     return (void *)addr;
 }
 
