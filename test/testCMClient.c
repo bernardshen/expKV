@@ -10,7 +10,7 @@ int main() {
     int ret = 0;
     
     testName("initCM");
-    ret = initCM(&cm, CLIENT);
+    ret = initCM(&cm, "127.0.0.1", CLIENT);
     checkErr(ret, "initCM");
 
     testName("CMClientConnect");

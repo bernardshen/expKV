@@ -65,7 +65,7 @@ typedef struct _ConnectionManager {
 } ConnectionManager;
 
 
-int initCM(ConnectionManager * cm, NodeType nodeType);
+int initCM(ConnectionManager * cm, char * host, NodeType nodeType);
 
 // register should be called before CMServerConnect
 int CMServerRegisterMR(ConnectionManager * cm, MemoryManager * mm);

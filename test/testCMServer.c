@@ -30,7 +30,7 @@ int main() {
     checkErr(ret, "initMM");
 
     testName("initCM");
-    ret = initCM(&cm, SERVER);
+    ret = initCM(&cm, NULL, SERVER);
     checkErr(ret, "initCM");
 
     testName("CMServerRegisterMR");

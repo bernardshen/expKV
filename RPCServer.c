@@ -233,7 +233,7 @@ int initRPCServer(RPCServer * rpcServer, TableType tableType) {
 
     // initialize CM
     printf("RPCServer: initCM\n");
-    ret = initCM(&(rpcServer->cm), SERVER);
+    ret = initCM(&(rpcServer->cm), NULL, SERVER);
     if (ret < 0) {
         printf("initCM failed\n");
         return -1;

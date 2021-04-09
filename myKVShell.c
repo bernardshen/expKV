@@ -137,13 +137,17 @@ static void clientShellPrintRes(ClientCmd * cmd) {
     }
 }
 
-int main() {
+int main(int argc, char ** argv) {
+    if (argc < 2) {
+        printf("Usage: %s host\n", argv[0]);
+        return -1;
+    }
     RPCClient client;
     int ret = -1;
     
     // initClient
     printf("Initializing RPCClient\n");
-    ret = initRPCClient(&client, SIMPLE);
+    ret = initRPCClient(&client, argv[1], SIMPLE);
     if (ret < 0) {
         printf("intiRPCClient failed\n");
         return -1;

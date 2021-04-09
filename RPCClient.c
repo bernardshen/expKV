@@ -145,7 +145,7 @@ static int simpleTableRemoteGet(RPCClient * rpcClient, char * key, uint64_t klen
 
 
 // ==== public functions ====
-int initRPCClient(RPCClient * rpcClient, TableType tableType) {
+int initRPCClient(RPCClient * rpcClient, char * _host, TableType tableType) {
     int ret = -1;
 
     // set rpcClient data
@@ -153,7 +153,7 @@ int initRPCClient(RPCClient * rpcClient, TableType tableType) {
 
     // initCM
     printf("RPCClient: initCM\n");
-    ret = initCM(&(rpcClient->cm), CLIENT);
+    ret = initCM(&(rpcClient->cm), _host, CLIENT);
     if (ret < 0) {
         printf("initCM failed\n");
         return -1;

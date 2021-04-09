@@ -5,12 +5,16 @@
 #include "utils.h"
 #include <stdint.h>
 
-int main() {
+int main(int argc, char ** argv) {
+    if (argc < 2) {
+        printf("Usage: %s host\n", argv[0]);
+        return -1;
+    }
     ConnectionManager cm;
     int ret = -1;
 
     testName("initCM");
-    ret = initCM(&cm, CLIENT);
+    ret = initCM(&cm, argv[1], CLIENT);
     checkErr(ret, "initCM");
     testEnd(ret);
 

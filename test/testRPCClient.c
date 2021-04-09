@@ -3,12 +3,17 @@
 #include "testUtil.h"
 #include <assert.h>
 
-int main() {
+int main(int argc, char ** argv) {
+    if (argc < 2) {
+        printf("Usage: %s host\n", argv[0]);
+        return -1;
+    }
+
     RPCClient client;
     int ret = -1;
     
     testName("initRPCClient");
-    ret = initRPCClient(&client, SIMPLE);
+    ret = initRPCClient(&client, argv[1], SIMPLE);
     checkErr(ret, "initRPCClient");
     testEnd(ret);
 

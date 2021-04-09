@@ -184,7 +184,7 @@ free_and_exit:
 }
 
 
-static int initCMServer(ConnectionManager * cm) {
+static int initCMServer(ConnectionManager * cm, char * _host) {
     int ret = -1;
     // allocate common resources
     ret = initCMCommon(cm);
@@ -248,8 +248,14 @@ static int initCMServer(ConnectionManager * cm) {
 }
 
 
-static int initCMClient(ConnectionManager * cm) {
+static int initCMClient(ConnectionManager * cm, char * _host) {
     int ret = -1;
+    // check if host exists
+    if (_host == NULL) {
+        printf("host not provided\n");
+        return -1;
+    }
+
     // allocate common resources
     ret = initCMCommon(cm);
     if (ret < 0) {
@@ -260,7 +266,7 @@ static int initCMClient(ConnectionManager * cm) {
     // client socket initialization
     int sockfd;
     struct addrinfo hints, *servinfo, *p;
-    char * hostName = "127.0.0.1";
+    char * hostName = _host;
     
     // set hints
     memset(&hints, 0, sizeof(hints));
@@ -603,7 +609,7 @@ static int clientConnectQP(ConnectionManager * cm, PeerData * peer) {
 }
 
 // ------ public functions ------
-int initCM(ConnectionManager * cm, NodeType nodeType) {
+int initCM(ConnectionManager * cm, char * host, NodeType nodeType) {
     int ret = -1;
     cm->nodeType = nodeType;
     cm->peerNum = 0;
@@ -611,11 +617,11 @@ int initCM(ConnectionManager * cm, NodeType nodeType) {
     switch (nodeType) {
     case CLIENT:
         // client sock will be connected
-        ret = initCMClient(cm);
+        ret = initCMClient(cm, host);
         return ret;
     case SERVER:
         // server sock will be listening
-        ret = initCMServer(cm);
+        ret = initCMServer(cm, host);
         return ret;
     
     default:

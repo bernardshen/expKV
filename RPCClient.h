@@ -9,7 +9,7 @@ typedef struct _RPCClient {
     TableType tableType;
 } RPCClient;
 
-int initRPCClient(RPCClient * rpcClient, TableType tableType);
+int initRPCClient(RPCClient * rpcClient, char * host, TableType tableType);
 int RPCClientKVPut(RPCClient * rpcClient, char * key, uint64_t klen, void * value, uint64_t vlen);
 int RPCClientKVDel(RPCClient * rpcClient, char * key, uint64_t klen);
 int RPCClientKVGet2S(RPCClient * rpcClient, char * key, uint64_t klen, __out void * value, __out uint64_t * vlen);
