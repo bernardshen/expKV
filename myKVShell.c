@@ -92,7 +92,7 @@ int parseInput(char * buf, __out ClientCmd * cmd) {
         memcpy(cmd->key, parsed[1], klen);
         cmd->klen = klen;
         return 0; // return success here
-    } else if (!strcmp(parsed[0], "quit") || !strcmp(parsed[0], "q")) {
+    } else if (!strcmp(parsed[0], "quit") || !strcmp(parsed[0], "q") || !strcmp(parsed[0], "exit")) {
         exit(0);
     }
     else {
