@@ -1,4 +1,4 @@
-include_directories(..)
+# include_directories(..)
 
 add_executable(testSimpleTable testSimple.c)
 add_executable(testMM testMM.c)
