@@ -7,7 +7,7 @@
 #include "kvTypes.h"
 #include <pthread.h>
 
-#define KV_RPCSERVER_MAX_THREADS 128
+#define KV_RPCSERVER_MAX_THREADS 1024
 
 typedef struct _RPCServerWorkerReq {
     ConnectionManager * cm;
