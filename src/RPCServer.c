@@ -200,8 +200,8 @@ static void RPCServerDispatcher(void * _rpcServer) {
                 free(workerReq);
             } else {
                 // add the thread to the rpcServer
-                rpcServer->threads[rpcServer->numThreads] = tid;
-                rpcServer->numThreads += 1;
+                // rpcServer->threads[rpcServer->numThreads] = tid;
+                // rpcServer->numThreads += 1;
             }
         }
     }
