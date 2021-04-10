@@ -1,1 +1,6 @@
 build/
+ycsb-client/myKV/target
+ycsb-client/myKV/.settings
+.project
+.classpath
+*.so
