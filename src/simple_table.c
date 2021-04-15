@@ -57,6 +57,7 @@ int simpleTablePut(BaseTable * table, char * key, size_t klen, char * value, siz
             // p = (SimpleTableItem*)malloc(sizeof(SimpleTableItem));
             p = (SimpleTableItem *)MMAllocItem(table->mm);
             if (p == NULL) {
+                printf("MMAllocItem failed\n");
                 return -1;
             }
 

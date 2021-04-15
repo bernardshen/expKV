@@ -29,6 +29,7 @@ static uint64_t hash_md5(const uint8_t *key, size_t len) {
     return *(size_t *)temp_hash;
 }
 
+// return true if the two key equals
 static int compare_key(char * key1, size_t len1, char * key2, size_t len2) {
     for (int i = 0; i < len1 && i < len2; i++) {
         if (key1[i] - key2[i])

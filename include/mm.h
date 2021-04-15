@@ -7,7 +7,7 @@
 #include "kvTypes.h"
 
 #ifndef TEST
-#define ITEM_POOL_SIZE 65536
+#define ITEM_POOL_SIZE 2048
 #else
 #define ITEM_POOL_SIZE 10
 #endif

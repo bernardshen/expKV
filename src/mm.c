@@ -7,6 +7,7 @@
 #include "mm.h"
 #include "base_table.h"
 #include "simple_table.h"
+#include "block_table.h"
 #include "spinlock.h"
 
 ///// Private functions
@@ -15,6 +16,10 @@ static int getSizes(TableType type, size_t * tblSize, size_t * itemSize) {
     case SIMPLE:
         *tblSize = sizeof(SimpleTable);
         *itemSize = sizeof(SimpleTableItem);
+        return 0;
+    case BLOCK:
+        *tblSize = sizeof(BlockTable);
+        *itemSize = sizeof(BlockTableItem);
         return 0;
     
     default:

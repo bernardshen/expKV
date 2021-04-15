@@ -1,5 +1,6 @@
 #include "base_table.h"
 #include "simple_table.h"
+#include "base_table.h"
 #include "mm.h"
 
 int initTable(BaseTable * t, MemoryManager * mm, TableType type) {
@@ -9,12 +10,15 @@ int initTable(BaseTable * t, MemoryManager * mm, TableType type) {
     t->mm = mm;
     
     // init table
-    switch (type)
-    {
+    switch (type) {
     case SIMPLE:
         ret = initSimpleTable(t);
         break;
     
+    case BLOCK:
+        ret = initBlockTable(t);
+        break;
+
     default:
         ret = -1;
     }

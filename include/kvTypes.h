@@ -6,6 +6,7 @@
 
 typedef enum _TableType {
     SIMPLE,
+    BLOCK,
     COCKOO,
     HOPSCOTCH,
 } TableType;
