@@ -48,7 +48,8 @@ int simpleTablePut(BaseTable * table, char * key, size_t klen, char * value, siz
             if (compare_key(p->key, pklen, key, klen)) { 
                 // update the item
                 p->value[0] = *(int64_t *)value;
-                p->value[1] = hash_md5((const uint8_t *)&p->value[0], sizeof(uint64_t));
+                // p->value[1] = hash_md5((const uint8_t *)&p->value[0], sizeof(uint64_t));
+                p->value[1] = hash_crc((const uint8_t *)&p->value[0], sizeof(uint64_t));
                 break;
             }
         }
@@ -64,7 +65,8 @@ int simpleTablePut(BaseTable * table, char * key, size_t klen, char * value, siz
             // setup the item
             memcpy(p->key, key, klen);
             p->value[0] = *(int64_t *)value;
-            p->value[1] = hash_md5((const uint8_t *)&p->value[0], sizeof(int64_t));
+            // p->value[1] = hash_md5((const uint8_t *)&p->value[0], sizeof(int64_t));
+            p->value[1] = hash_crc((const uint8_t *)&p->value[0], sizeof(int64_t));
             p->itemVec = SIMPLE_TABLE_ITEM_VEC(1, klen); // update itemVec
 
             // add the item to the linked list
@@ -74,7 +76,8 @@ int simpleTablePut(BaseTable * table, char * key, size_t klen, char * value, siz
     } else {
         memcpy(item->key, key, klen);
         item->value[0] = *(int64_t *)value;
-        item->value[1] = hash_md5((const uint8_t *)&(item->value[0]), sizeof(int64_t));
+        // item->value[1] = hash_md5((const uint8_t *)&(item->value[0]), sizeof(int64_t));
+        item->value[1] = hash_crc((const uint8_t *)&(item->value[0]), sizeof(int64_t));
         item->itemVec = SIMPLE_TABLE_ITEM_VEC(1, klen);
     }
 
@@ -98,7 +101,8 @@ int simpleTableGet(BaseTable * table, char * key, size_t klen, char * value, siz
             size_t keylen = SIMPLE_TABLE_ITEM_KEYLEN(p->itemVec);
             if (compare_key(p->key, keylen, key, klen)) {
                 int64_t tmp = p->value[0];
-                while(p->value[1] != hash_md5((const uint8_t *)&tmp, sizeof(int64_t))) {
+                // while(p->value[1] != hash_md5((const uint8_t *)&tmp, sizeof(int64_t))) {
+                while(p->value[1] != hash_crc((const uint8_t *)&tmp, sizeof(int64_t))) {
                     tmp = p->value[0];
                 }
                 *(int64_t *)value = tmp;

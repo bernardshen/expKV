@@ -7,6 +7,7 @@
 #include <openssl/md5.h>
 #include <byteswap.h>
 #include "city.h"
+#include "crc64.h"
 
 #if __BYTE_ORDER == __LITTLE_ENDIAN
 static inline uint64_t htonll(uint64_t x) { return bswap_64(x); }
@@ -27,6 +28,10 @@ static uint64_t hash_md5(const uint8_t *key, size_t len) {
     MD5(key, len, (uint8_t *)temp_hash);
     // assert(8 <= MD5_DIGEST_LENGTH);
     return *(size_t *)temp_hash;
+}
+
+static uint64_t hash_crc(const uint8_t * key, size_t len) {
+    return crc64((const char *)key, (int)len);
 }
 
 // return true if the two key equals

@@ -48,7 +48,8 @@ static void putKVInBlock(BlockTableItem * block, char * key, size_t klen, char *
     memcpy(block->key[index], key, klen);
     // put value
     block->value[index][0] = *(int64_t *)value;
-    block->value[index][1] = hash_md5((const uint8_t *)&block->value[index][0], sizeof(int64_t));
+    // block->value[index][1] = hash_md5((const uint8_t *)&block->value[index][0], sizeof(int64_t));
+    block->value[index][1] = hash_crc((const uint8_t *)&block->value[index][0], sizeof(int64_t));
     // setup item vector
     block->itemVec[index] = BLOCK_TABLE_ITEM_VEC(1, klen);
 }
@@ -157,7 +158,8 @@ int blockTableGet(BaseTable * table, char * key, size_t klen, char * value, size
         found = findKVInBlock(p, key, klen, &emptyId);
         if (found >= 0) {
             int64_t tmp = p->value[found][0];
-            while (p->value[found][1] != hash_md5((const uint8_t *)&tmp, sizeof(int64_t))) {
+            // while (p->value[found][1] != hash_md5((const uint8_t *)&tmp, sizeof(int64_t))) {
+            while (p->value[found][1] != hash_crc((const uint8_t *)&tmp, sizeof(int64_t))) {
                 tmp = p->value[found][0];
             }
             *(int64_t *)value = tmp;
