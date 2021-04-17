@@ -1,7 +1,7 @@
 #ifndef KV_TYPES
 #define KV_TYPES
 
-#define KV_KEYLEN_LIMIT 16
+#define KV_KEYLEN_LIMIT 15
 #define __out
 
 typedef enum _TableType {

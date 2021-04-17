@@ -32,7 +32,7 @@ int initSimpleTable(BaseTable * t) {
 
 int simpleTablePut(BaseTable * table, char * key, size_t klen, char * value, size_t vlen) {
     SimpleTable *stable = (SimpleTable *)table->table;
-    klen = min(klen, 16);
+    klen = min(klen, KV_KEYLEN_LIMIT);
     uint64_t keyhash = hash(key, klen) % SIMPLE_TABLE_SIZE;
 
     // get value & lock the item
@@ -88,7 +88,7 @@ int simpleTablePut(BaseTable * table, char * key, size_t klen, char * value, siz
 
 int simpleTableGet(BaseTable * table, char * key, size_t klen, char * value, size_t * vlen) {
     SimpleTable *stable = (SimpleTable *)table->table;
-    klen = min(klen, 16);
+    klen = min(klen, KV_KEYLEN_LIMIT);
     uint64_t keyhash = hash(key, klen) % SIMPLE_TABLE_SIZE;
     
     // get the item & lock the item
@@ -123,7 +123,7 @@ int simpleTableGet(BaseTable * table, char * key, size_t klen, char * value, siz
 
 int simpleTableDel(BaseTable * table, char * key, size_t klen) {
     SimpleTable *stable = (SimpleTable *)table->table;
-    klen = min(klen, 16);
+    klen = min(klen, KV_KEYLEN_LIMIT);
     uint64_t keyhash = hash(key, klen) % SIMPLE_TABLE_SIZE;
 
     // get item & lock the item

@@ -113,7 +113,7 @@ static int simpleTableRemoteGet(RPCClient * rpcClient, char * key, uint64_t klen
         // deal with the remaining items
         SimpleTableItem * lp;       // local pointer: point to the data structure in local memory
         SimpleTableItem * rp;       // remote pointer: point to the data structure in remote memory
-        for (rp = item->next; rp; rp = rp->next) {
+        for (rp = item->next; rp; rp = lp->next) {
             // fetch remote item if not the first item
             ret = simpleTableRDMAReadItem(cm, (uintptr_t)rp, &lp);
             if (ret < 0) {
