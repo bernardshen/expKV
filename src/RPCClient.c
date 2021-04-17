@@ -97,7 +97,8 @@ static int simpleTableRemoteGet(RPCClient * rpcClient, char * key, uint64_t klen
         // deal with the first item because its in the table mr !!!! shit
         size_t keylen = SIMPLE_TABLE_ITEM_KEYLEN(item->itemVec);
         if (compare_key(item->key, keylen, key, klen)) {
-            while (item->value[1] != hash_md5((const uint8_t *)&(item->value[0]), sizeof(int64_t))) {
+            // while (item->value[1] != hash_md5((const uint8_t *)&(item->value[0]), sizeof(int64_t))) {
+            while (item->value[1] != hash_crc((const uint8_t *)&(item->value[0]), sizeof(int64_t))) {
                 ret = simpleTableRDMAReadTable(cm, key, klen, &item);
                 if (ret < 0) {
                     printf("simpleTableRDMAReadTable failed\n");
@@ -125,7 +126,8 @@ static int simpleTableRemoteGet(RPCClient * rpcClient, char * key, uint64_t klen
             if (compare_key(lp->key, keylen, key, klen)) {
                 // check if the md5 matches
                 // if not, constantly fetching remote item
-                while (lp->value[1] != hash_md5((const uint8_t *)&(lp->value[1]), sizeof(int64_t))) {
+                // while (lp->value[1] != hash_md5((const uint8_t *)&(lp->value[1]), sizeof(int64_t))) {
+                while (lp->value[1] != hash_crc((const uint8_t *)&(lp->value[1]), sizeof(int64_t))) {
                     ret = simpleTableRDMAReadItem(cm, rp, &lp);
                     if (ret < 0) {
                         printf("simpleTableRDMAReadItem failed\n");
