@@ -61,6 +61,11 @@ static int place(CuckooTable * table, int tableID, int cnt, int n, CuckooTableIt
     if (CUCKOO_TABLE_ITEM_VALID(item->itemVec)) {
         // reserve the current item
         CuckooTableItem * displace_item = (CuckooTableItem *)malloc(sizeof(CuckooTableItem));
+        memcpy(displace_item->key, item->key, CUCKOO_TABLE_ITEM_KEYLEN(item->itemVec));
+        memcpy(displace_item->value, item->value, sizeof(int64_t) * 2);
+        displace_item->itemVec = item->itemVec;
+        spin_unlock(&(displace_item->lock));
+
         // replace the current item
         // cannot directly memcpy because the lock will be overwritten
         memcpy(item->key, insert_item->key, CUCKOO_TABLE_ITEM_KEYLEN(insert_item->itemVec));

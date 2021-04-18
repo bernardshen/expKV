@@ -144,10 +144,13 @@ int main(int argc, char ** argv) {
     }
     TableType t;
     if (!strcmp(argv[2], "cuckoo") || !strcmp(argv[2], "CUCKOO")) {
+        printf("Table Type: cuckoo\n");
         t = CUCKOO;
     } else if (!strcmp(argv[2], "simple") || !strcmp(argv[2], "SIMPLE")) {
+        printf("Table Type: simple\n");
         t = SIMPLE;
     } else {
+        printf("Table Type: simple\n");
         t = SIMPLE;
     }
 

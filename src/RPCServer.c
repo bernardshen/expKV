@@ -225,7 +225,7 @@ int initRPCServer(RPCServer * rpcServer, TableType tableType) {
 
     // initialize table
     printf("RPCServer: initTable\n");
-    ret = initTable(&(rpcServer->table), &(rpcServer->mm), SIMPLE);
+    ret = initTable(&(rpcServer->table), &(rpcServer->mm), tableType);
     if (ret < 0) {
         printf("initTable failed\n");
         return -1;

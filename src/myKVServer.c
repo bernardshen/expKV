@@ -10,10 +10,13 @@ int main(int argc, char ** argv) {
         return 1;
     }
     if (!strcmp(argv[1], "cuckoo") || !strcmp(argv[1], "CUCKOO")) {
+        printf("Table Type: cuckoo\n");
         t = CUCKOO;
     } else if (!strcmp(argv[1], "simple") || !strcmp(argv[1], "SIMPLE")) {
+        printf("Table Type: simple\n");
         t = SIMPLE;
     } else {
+        printf("Table Type: simple\n");
         t = SIMPLE;
     }
 

@@ -199,6 +199,7 @@ static int cuckooTableRemoteGet(RPCClient * rpcClient, char * key, uint64_t klen
             return 0;
         }
     }
+    return -1;
 }
 
 // ==== public functions ====
