@@ -20,7 +20,7 @@
 #define KV_CQ_SIZE 10
 #define KV_TCP_PORT "2333"
 #define KV_TCP_BACKLOG 10
-#define KV_LOCAL_MR_SIZE 512
+#define KV_LOCAL_MR_SIZE 1024
 #define KV_RDMA_PROTNUM 1
 #define KV_RDMA_GIDIDX 0
 

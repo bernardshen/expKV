@@ -4,6 +4,7 @@
 #include "cm.h"
 #include "simple_table.h"
 #include "cuckoo_table.h"
+#include "hopscotch_table.h"
 #include <assert.h>
 
 // ==== private functions ====
@@ -202,6 +203,92 @@ static int cuckooTableRemoteGet(RPCClient * rpcClient, char * key, uint64_t klen
     return -1;
 }
 
+static int hopscotchTableRDMAReadNeighbour(ConnectionManager * cm, char * key, uint64_t klen, __out SimpleTableItem ** item) {
+    int ret = -1;
+    
+    // get key hash and calculate address
+    uint64_t keyhash = hash(key, klen) % HOPSCOTCH_TABLE_SIZE;
+    uint64_t offset = keyhash * sizeof(HopscotchTableItem);
+    uintptr_t remoteAddr = (cm->peers[0]->tableAddr) + offset;
+
+    // post read
+    ret = CMReadTable(cm, 0, remoteAddr, sizeof(HopscotchTableItem) * HOPSCOTCH_TABLE_NEIGHBOUR);
+    if (ret < 0) {
+        printf("CMReadTable failed\n");
+        return -1;
+    }
+
+    // get reply
+    ret = clientWaitReply(cm, (void **)item);
+    if (ret < 0) {
+        printf("clientWaitReply failed\n");
+        return -1;
+    }
+    return 0; // return success here
+}
+
+static int hopscotchTableRDMAReadSingle(ConnectionManager * cm, uint64_t keyhash, __out SimpleTableItem ** item) {
+    int ret = -1;
+    
+    // get key hash and calculate address
+    uint64_t offset = keyhash * sizeof(HopscotchTableItem);
+    uintptr_t remoteAddr = (cm->peers[0]->tableAddr) + offset;
+
+    // post read
+    ret = CMReadTable(cm, 0, remoteAddr, sizeof(HopscotchTableItem));
+    if (ret < 0) {
+        printf("CMReadTable failed\n");
+        return -1;
+    }
+
+    // get reply
+    ret = clientWaitReply(cm, (void **)item);
+    if (ret < 0) {
+        printf("clientWaitReply failed\n");
+        return -1;
+    }
+    return 0; // return success here
+}
+
+static int hopscotchTableRemoteGet(RPCClient * rpcClient, char * key, uint64_t klen, __out void * value, __out uint64_t * vlen) {
+    int ret = -1;
+    ConnectionManager * cm = &(rpcClient->cm);
+    klen = min(klen, KV_KEYLEN_LIMIT);
+    uint64_t keyhash = hash((const uint8_t *)key, klen) % HOPSCOTCH_TABLE_SIZE;
+
+    // get the whole neighbourhood
+    HopscotchTableItem * item = NULL;
+    ret = hopscotchTableRDMAReadNeighbour(cm, key, klen, &item);
+    if (ret < 0) {
+        printf("hopscotchTableRDMAReadTable failed\n");
+        return -1;
+    }
+
+    // check if there is an item equal
+    for (int i = 0; i < HOPSCOTCH_TABLE_NEIGHBOUR; i++) {
+        if (item[0].hopInfo & (1 << i)) {
+            if (HOPSCOTCH_TABLE_ITEM_VALID(item[i].itemVec)) {
+                uint64_t tkeylen = HOPSCOTCH_TABLE_ITEM_KEYLEN(item[i].itemVec);
+                if (compare_key(item[i].key, tkeylen, key, klen)) {
+                    HopscotchTableItem * titem = &item[i];
+                    while (titem->value[1] != hash_crc((const uint8_t *)&(titem->value[0]), sizeof(int64_t))) {
+                        ret = hopscotchTableRDMAReadSingle(cm, keyhash + i, &titem);
+                        if (ret < 0) {
+                            printf("hopscotchTableRDMAReadSingle failed\n");
+                            return -1;
+                        }
+                    }
+                    *(int64_t *)value = item->value[0];
+                    *vlen = sizeof(int64_t);
+                    return 0;
+                }
+            }
+        }
+    }
+
+    return -1;
+}
+
 // ==== public functions ====
 int initRPCClient(RPCClient * rpcClient, char * _host, TableType tableType) {
     int ret = -1;
@@ -375,6 +462,11 @@ int RPCClientKVGet1S(RPCClient * rpcClient, char * key, uint64_t klen, __out voi
         ret = cuckooTableRemoteGet(rpcClient, key, klen, value, vlen);
         if (ret < 0) {
             printf("cuckooTableRemoteGet failed\n");
+        }
+    case HOPSCOTCH:
+        ret = hopscotchTableRemoteGet(rpcClient, key, klen, value, vlen);
+        if (ret < 0) {
+            printf("hopscotchTableRemoteGet failed\n");
         }
     default:
         break;

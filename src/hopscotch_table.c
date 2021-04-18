@@ -65,7 +65,7 @@ int hopscotchTablePut(BaseTable * table, char * key, size_t klen, char * value, 
     // find key in the table
     // lock the table
     spin_lock(&(htable->lock));
-    uint64_t id = hopscotchLookup(htable, key, klen);
+    int64_t id = hopscotchLookup(htable, key, klen);
     if (id >= 0) {
         // update the item inplace
         htable->table[id].value[0] = *(int64_t *)value;
@@ -77,26 +77,30 @@ int hopscotchTablePut(BaseTable * table, char * key, size_t klen, char * value, 
     }
 
     // find an empty slot
-    int i, j, off;
+    int i = 0;
+    int j = 0;
+    int off = 0;
     for (i = keyhash; i < HOPSCOTCH_TABLE_SIZE; i++) {
         HopscotchTableItem * item = &(htable->table[i]);
         if (!HOPSCOTCH_TABLE_ITEM_VALID(item->itemVec)) {
             // empty item
-            for (j = 1; j < HOPSCOTCH_TABLE_NEIGHBOUR; j++) {
-                if (htable->table[i - j].hopInfo) {
-                    off = __builtin_ctz(htable->table[i - j].hopInfo);
-                    if (off >= j) {
-                        continue;
+            while (i - keyhash >= HOPSCOTCH_TABLE_NEIGHBOUR) {
+                for (j = 1; j < HOPSCOTCH_TABLE_NEIGHBOUR; j++) {
+                    if (htable->table[i - j].hopInfo) {
+                        off = __builtin_ctz(htable->table[i - j].hopInfo);
+                        if (off >= j) {
+                            continue;
+                        }
+                        int tklen = HOPSCOTCH_TABLE_ITEM_KEYLEN(htable->table[i - j + off].itemVec);
+                        memcpy(htable->table[i].key, htable->table[i - j + off].key, tklen);
+                        memcpy(htable->table[i].value, htable->table[i - j + off].value, sizeof(int64_t) * 2);
+                        memcpy(htable->table[i].itemVec, htable->table[i - j + off].itemVec, sizeof(uint8_t));
+                        htable->table[i - j + off].itemVec = 0;
+                        htable->table[i - j].hopInfo &= ~(1ULL << off);
+                        htable->table[i - j].hopInfo |= (1ULL << j);
+                        i = i - j + off;
+                        break;
                     }
-                    int tklen = HOPSCOTCH_TABLE_ITEM_KEYLEN(htable->table[i - j + off].itemVec);
-                    memcpy(htable->table[i].key, htable->table[i - j + off].key, tklen);
-                    memcpy(htable->table[i].value, htable->table[i - j + off].value, sizeof(int64_t) * 2);
-                    memcpy(htable->table[i].itemVec, htable->table[i - j + off].itemVec, sizeof(uint8_t));
-                    htable->table[i - j + off].itemVec = 0;
-                    htable->table[i - j].hopInfo &= ~(1ULL << off);
-                    htable->table[i - j].hopInfo |= (1ULL << j);
-                    i = i - j + off;
-                    break;
                 }
             }
             if (j >= HOPSCOTCH_TABLE_NEIGHBOUR) {

@@ -149,6 +149,9 @@ int main(int argc, char ** argv) {
     } else if (!strcmp(argv[2], "simple") || !strcmp(argv[2], "SIMPLE")) {
         printf("Table Type: simple\n");
         t = SIMPLE;
+    } else if (!strcmp(argv[2], "hopscotch")) {
+        printf("Table Type: Hopscotch\n");
+        t = HOPSCOTCH;
     } else {
         printf("Table Type: simple\n");
         t = SIMPLE;
