@@ -4,16 +4,24 @@
 #include <assert.h>
 
 int main(int argc, char ** argv) {
-    if (argc < 2) {
-        printf("Usage: %s host\n", argv[0]);
+    TableType t;
+    if (argc < 3) {
+        printf("Usage: %s host tableType\n", argv[0]);
         return -1;
+    }
+    if (!strcmp(argv[2], "cuckoo")) {
+        t = CUCKOO;
+    } else if (!strcmp(argv[2], "simple")) {
+        t = SIMPLE;
+    } else {
+        t = SIMPLE;
     }
 
     RPCClient client;
     int ret = -1;
     
     testName("initRPCClient");
-    ret = initRPCClient(&client, argv[1], SIMPLE);
+    ret = initRPCClient(&client, argv[1], t);
     checkErr(ret, "initRPCClient");
     testEnd(ret);
 

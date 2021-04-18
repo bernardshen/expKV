@@ -3,6 +3,7 @@
 #include "utils.h"
 #include "cm.h"
 #include "simple_table.h"
+#include "cuckoo_table.h"
 #include <assert.h>
 
 // ==== private functions ====
@@ -127,7 +128,7 @@ static int simpleTableRemoteGet(RPCClient * rpcClient, char * key, uint64_t klen
                 // check if the md5 matches
                 // if not, constantly fetching remote item
                 // while (lp->value[1] != hash_md5((const uint8_t *)&(lp->value[1]), sizeof(int64_t))) {
-                while (lp->value[1] != hash_crc((const uint8_t *)&(lp->value[1]), sizeof(int64_t))) {
+                while (lp->value[1] != hash_crc((const uint8_t *)&(lp->value[0]), sizeof(int64_t))) {
                     ret = simpleTableRDMAReadItem(cm, rp, &lp);
                     if (ret < 0) {
                         printf("simpleTableRDMAReadItem failed\n");
@@ -145,6 +146,60 @@ static int simpleTableRemoteGet(RPCClient * rpcClient, char * key, uint64_t klen
     return -1; // return fail here
 }
 
+// read the item in the table specificed by ver
+static int cuckooTableRDMAReadTable(ConnectionManager * cm, char * key, uint64_t klen, int ver, __out SimpleTableItem ** item) {
+    int ret = -1;
+    
+    // calculate keyhash
+    uint64_t keyhash = cuckoo_hash(ver, key, klen);
+    uint64_t offset = keyhash * sizeof(CuckooTableItem) + ver * sizeof(CuckooTableItem) * CUCKOO_TABLE_SIZE;
+    uintptr_t remoteAddr = (cm->peers[0]->tableAddr) + offset;
+
+    // post read
+    ret = CMReadTable(cm, 0, remoteAddr, sizeof(SimpleTableItem));
+    if (ret < 0) {
+        printf("CMReadTable failed\n");
+        return -1;
+    }
+
+    // get reply
+    ret = clientWaitReply(cm, (void**)item);
+    if (ret < 0) {
+        printf("clientWaitReply failed\n");
+        return -1;
+    }
+    return 0; // return success here
+}
+
+static int cuckooTableRemoteGet(RPCClient * rpcClient, char * key, uint64_t klen, __out void * value, __out uint64_t * vlen) {
+    int ret = -1;
+    ConnectionManager * cm = &(rpcClient->cm);
+
+    // check item on each table
+    CuckooTableItem * item = NULL;
+    for (int i = 0; i < CUCKOO_TABLE_NUM; i++) {
+        ret = cuckooTableRDMAReadTable(cm, key, klen, i, &item);
+        if (ret < 0) {
+            printf("cuckooTableRDMAReadTable failed\n");
+            return -1;
+        }
+
+        // check item
+        size_t keylen = CUCKOO_TABLE_ITEM_KEYLEN(item->itemVec);
+        if (compare_key(item->key, keylen, key, klen)) {
+            while (item->value[1] != hash_crc((const uint8_t *)&(item->value[0]), sizeof(int64_t))) {
+                ret = cuckooTableRDMAReadTable(cm, key, klen, i, &item);
+                if (ret < 0) {
+                    printf("cuckooTableRDMAReadTable failed\n");
+                    return -1;
+                }
+            }
+            *(int64_t *)value = item->value[0];
+            *vlen = sizeof(int64_t);
+            return 0;
+        }
+    }
+}
 
 // ==== public functions ====
 int initRPCClient(RPCClient * rpcClient, char * _host, TableType tableType) {
@@ -315,6 +370,11 @@ int RPCClientKVGet1S(RPCClient * rpcClient, char * key, uint64_t klen, __out voi
             printf("simpleTableRemoteGet failed\n");
         }
         break;
+    case CUCKOO:
+        ret = cuckooTableRemoteGet(rpcClient, key, klen, value, vlen);
+        if (ret < 0) {
+            printf("cuckooTableRemoteGet failed\n");
+        }
     default:
         break;
     }

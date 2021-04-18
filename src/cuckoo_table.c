@@ -4,8 +4,7 @@
 #include "utils.h"
 #include <stdint.h>
 
-// ==== private functions ====
-static uint64_t cuckoo_hash(int version, char * key, size_t klen) {
+uint64_t cuckoo_hash(int version, char * key, size_t klen) {
     uint64_t keyhash = hash((const uint8_t *)key, klen);
     switch (version) {
     case 0:
@@ -19,6 +18,7 @@ static uint64_t cuckoo_hash(int version, char * key, size_t klen) {
     return 0;
 }
 
+// ==== private functions ====
 // be called recursively to place item in it
 static int place(CuckooTable * table, int tableID, int cnt, int n, CuckooTableItem * insert_item) {
     int ret = -1;

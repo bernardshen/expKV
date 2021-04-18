@@ -138,16 +138,25 @@ static void clientShellPrintRes(ClientCmd * cmd) {
 }
 
 int main(int argc, char ** argv) {
-    if (argc < 2) {
-        printf("Usage: %s host\n", argv[0]);
+    if (argc < 3) {
+        printf("Usage: %s host tableType\n", argv[0]);
         return -1;
     }
+    TableType t;
+    if (!strcmp(argv[2], "cuckoo") || !strcmp(argv[2], "CUCKOO")) {
+        t = CUCKOO;
+    } else if (!strcmp(argv[2], "simple") || !strcmp(argv[2], "SIMPLE")) {
+        t = SIMPLE;
+    } else {
+        t = SIMPLE;
+    }
+
     RPCClient client;
     int ret = -1;
     
     // initClient
     printf("Initializing RPCClient\n");
-    ret = initRPCClient(&client, argv[1], SIMPLE);
+    ret = initRPCClient(&client, argv[1], t);
     if (ret < 0) {
         printf("intiRPCClient failed\n");
         return -1;

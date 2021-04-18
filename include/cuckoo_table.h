@@ -37,4 +37,6 @@ int cuckooTablePut(BaseTable * table, char * key, size_t klen, char * value, siz
 int cuckooTableGet(BaseTable * table, char * key, size_t klen, char * value, size_t *vlen);
 int cuckooTableDel(BaseTable * table, char * key, size_t klen);
 
+uint64_t cuckoo_hash(int version, char * key, size_t klen);
+
 #endif
