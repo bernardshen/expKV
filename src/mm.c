@@ -9,6 +9,7 @@
 #include "simple_table.h"
 #include "block_table.h"
 #include "cuckoo_table.h"
+#include "hopscotch_table.h"
 #include "spinlock.h"
 
 ///// Private functions
@@ -24,6 +25,10 @@ static int getSizes(TableType type, size_t * tblSize, size_t * itemSize) {
         return 0;
     case CUCKOO:
         *tblSize = sizeof(CuckooTable);
+        *itemSize = 0;
+        return 0;
+    case HOPSCOTCH:
+        *tblSize = sizeof(HopscotchTable);
         *itemSize = 0;
         return 0;
     

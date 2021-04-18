@@ -13,6 +13,10 @@ int main(int argc, char ** argv) {
         t = CUCKOO;
     } else if (!strcmp(argv[2], "simple")) {
         t = SIMPLE;
+    } else if (!strcmp(argv[2], "hopscotch")) {
+        t = HOPSCOTCH;
+    } else if (!strcmp(argv[2], "block")) {
+        t = BLOCK;
     } else {
         t = SIMPLE;
     }

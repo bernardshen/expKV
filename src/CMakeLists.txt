@@ -1,6 +1,6 @@
 # aux_source_directory(. DIR_SRCS)
 
-add_library(MyKV SHARED cm.c city.c base_table.c mm.c RPCClient.c simple_table.c RPCServer.c block_table.c cuckoo_table.c crc64.c)
+add_library(MyKV SHARED cm.c city.c base_table.c mm.c RPCClient.c simple_table.c hopscotch_table.c RPCServer.c block_table.c cuckoo_table.c crc64.c)
 add_executable(myKVShell myKVShell.c)
 add_executable(myKVServer myKVServer.c)
 

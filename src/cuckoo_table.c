@@ -105,7 +105,6 @@ int initCuckooTable(BaseTable * t) {
     for (int i = 0; i < CUCKOO_TABLE_NUM; i++) {
         for (int j = 0; j < CUCKOO_TABLE_SIZE; j++) {
             table->table[i][j].itemVec = 0;
-            table->table[i][j].next = NULL;
             spin_unlock(&(table->table[i][j].lock));
         }
     }

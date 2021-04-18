@@ -23,7 +23,6 @@ typedef struct _CuckooTableItem {
     spinlock lock;                              // used to lock the item
     char key[KV_KEYLEN_LIMIT];
     int64_t value[2];
-    struct _CuckooTableItem * next;  // point to the next item with same hashkey
 } CuckooTableItem;
 
 

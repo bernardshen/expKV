@@ -2,6 +2,7 @@
 #include "simple_table.h"
 #include "block_table.h"
 #include "cuckoo_table.h"
+#include "hopscotch_table.h"
 #include "mm.h"
 
 int initTable(BaseTable * t, MemoryManager * mm, TableType type) {
@@ -30,6 +31,13 @@ int initTable(BaseTable * t, MemoryManager * mm, TableType type) {
         ret = initCuckooTable(t);
         if (ret < 0) {
             printf("initCuckooTable failed\n");
+        }
+        break;
+    
+    case HOPSCOTCH:
+        ret = initHopscotchTable(t);
+        if (ret < 0) {
+            printf("init HopscotchTable failed\n");
         }
         break;
 
