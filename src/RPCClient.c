@@ -463,11 +463,13 @@ int RPCClientKVGet1S(RPCClient * rpcClient, char * key, uint64_t klen, __out voi
         if (ret < 0) {
             printf("cuckooTableRemoteGet failed\n");
         }
+        break;
     case HOPSCOTCH:
         ret = hopscotchTableRemoteGet(rpcClient, key, klen, value, vlen);
         if (ret < 0) {
             printf("hopscotchTableRemoteGet failed\n");
         }
+        break;
     default:
         break;
     }
