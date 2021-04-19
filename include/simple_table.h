@@ -8,7 +8,7 @@
 #include "kvTypes.h"
 #include "mm.h"
 
-#define SIMPLE_TABLE_SIZE 256
+#define SIMPLE_TABLE_SIZE 2048
 
 #define SIMPLE_TABLE_ITEM_VALID(itemVec) ((itemVec >> 7) & 1)
 #define SIMPLE_TABLE_ITEM_KEYLEN(itemVec) ((itemVec >> 3) & 0xF)
