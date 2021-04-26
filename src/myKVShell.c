@@ -21,6 +21,14 @@ static int checkNumber(char * str) {
     return 0;
 } 
 
+static void usage() {
+    printf("==== Usage ====\n");
+    printf("put key value\n");
+    printf("get key\n");
+    printf("del key\n");
+    printf("===============\n");
+}
+
 int parseInput(char * buf, __out ClientCmd * cmd) {
     int ret = -1;
     char * p = strtok(buf, " ");
@@ -94,6 +102,9 @@ int parseInput(char * buf, __out ClientCmd * cmd) {
         return 0; // return success here
     } else if (!strcmp(parsed[0], "quit") || !strcmp(parsed[0], "q") || !strcmp(parsed[0], "exit")) {
         exit(0);
+    } else if (!strcmp(parsed[0], "help")) {
+        usage();
+        return 0;
     }
     else {
         // no match cmd
