@@ -18,7 +18,7 @@ make
 ### Running
 ```bash
 cd myKV/build/src
-./MyKVServer [TableType] # TableType = [table, cuckoo, hopscotch]
+./MyKVServer [TableType] # TableType = [simple, cuckoo, hopscotch]
 ./MyKVShell [IPaddress] [TableType]
 ```
 Then you will start a MyKV server and a shell that can execute get, put and delete operations (type help for more detail in the shell).
